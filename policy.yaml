@@ -1,0 +1,31 @@
+rules:
+  - name: "no-env-files"
+    type: forbidden_files
+    patterns:
+      - ".env"
+      - ".pem"
+      - ".key"
+      - ".p12"
+    action: block
+
+  - name: "no-print-statements"
+    type: forbidden_patterns
+    regex: "print\\s*\\("
+    file_types:
+      - ".py"
+    action: warn
+
+  - name: "no-hardcoded-tokens"
+    type: forbidden_patterns
+    regex: "ghp_[a-zA-Z0-9]+"
+    file_types:
+      - ".py"
+      - ".js"
+      - ".ts"
+    action: block
+
+  - name: "require-tests"
+    type: file_required
+    patterns:
+      - "test_*.py"
+    action: warn

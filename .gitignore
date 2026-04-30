@@ -1,4 +1,16 @@
-venv/
+@"
+.env
 __pycache__/
 *.pyc
-.env
+node_modules/
+dist/
+review_store.json
+history_findings.json
+*.json.bak
+.vscode/
+*.egg-info/
+venv/
+.venv/
+dashboard/frontend/node_modules/
+dashboard/frontend/dist/
+"@ | Out-File -FilePath .gitignore -Encoding utf8
