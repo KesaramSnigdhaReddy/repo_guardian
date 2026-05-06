@@ -445,44 +445,13 @@ export default function AutoFixPanel() {
               </button>
 
               <button
-                onClick={async () => {
+                onClick={() => {
 
-                  try {
+                  window.open(prData?.url, "_blank");
 
-                    const response = await fetch(
-                      "http://localhost:8000/api/merge-pr",
-                      {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                          pr_number: prData.number
-                        })
-                      }
-                    );
-
-                    const data = await response.json();
-
-                    if (data.success) {
-
-                      alert("✅ Pull Request Merged");
-
-                      setShowPR(false);
-
-                    } else {
-
-                      alert(`❌ Merge Failed\n\n${data.error}`);
-
-                    }
-
-                  } catch (err) {
-
-                    console.error(err);
-
-                    alert("Merge API failed");
-
-                  }
+                  alert(
+                    "Open the GitHub PR and click 'Merge Pull Request' directly in GitHub."
+                  );
 
                 }}
                 style={{
@@ -495,7 +464,7 @@ export default function AutoFixPanel() {
                   fontWeight: 600
                 }}
               >
-                Merge Secure PR
+                Open & Merge in GitHub
               </button>
 
             </div>
