@@ -1233,7 +1233,9 @@ def merge_pr(data: dict):
         pr = repo.get_pull(pr_number)
 
         # MERGE PR
-        merge_result = pr.merge()
+        merge_result = pr.merge(
+    merge_method="squash"
+)
 
         add_activity(
             f"Pull Request #{pr_number} merged successfully",
