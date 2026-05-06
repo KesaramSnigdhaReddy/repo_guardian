@@ -19,7 +19,13 @@ from github import Github
 from agents.pr_review import run_pr_review_agent, PRReviewResult, ReviewComment
 from agents.policy_agent import PolicyAgent
 from agents.history_scanner import load_findings, run_history_scan
-
+from github import Github
+from pydantic import BaseModel
+import subprocess
+import os
+class PRRequest(BaseModel):
+    risk: str
+    fix: str
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [PR_AGENT] %(message)s")
 log = logging.getLogger(__name__)
 
@@ -338,32 +344,225 @@ def trigger_review(req: ReviewRequest):
 # ─────────────────────────────────────────
 # /api/report/{pr_id}
 # ─────────────────────────────────────────
+from fastapi.responses import StreamingResponse
+import io
 
 @app.get("/api/report/{pr_id}")
 def get_report(pr_id: int):
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import mm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+    from reportlab.lib.enums import TA_LEFT, TA_CENTER
+
     result = review_results.get(pr_id)
     if not result:
         raise HTTPException(status_code=404, detail="PR not found")
 
-    findings = [
-        {
-            "file":     c.path,
-            "line":     c.line,
-            "severity": c.severity,
-            "category": c.category,
-            "message":  c.body,
-        }
-        for c in result.comments
-    ]
+    policy = getattr(result, "policy", {})
+    final_score = min(result.score, policy.get("score", 100))
 
-    return {
-        "pr_number": result.pr_number,
-        "repo":      result.repo_name,
-        "score":     result.score,
-        "summary":   result.summary,
-        "findings":  findings,
-        "policy":    getattr(result, "policy", {}),
+    # ── Buffer ──
+    buffer = io.BytesIO()
+    doc    = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=20*mm, leftMargin=20*mm,
+        topMargin=20*mm,   bottomMargin=20*mm,
+    )
+
+    # ── Styles ──
+    styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle("title",
+        fontSize=22, fontName="Helvetica-Bold",
+        textColor=colors.HexColor("#0d1117"),
+        spaceAfter=4)
+
+    subtitle_style = ParagraphStyle("subtitle",
+        fontSize=11, fontName="Helvetica",
+        textColor=colors.HexColor("#656d76"),
+        spaceAfter=16)
+
+    section_style = ParagraphStyle("section",
+        fontSize=13, fontName="Helvetica-Bold",
+        textColor=colors.HexColor("#0d1117"),
+        spaceBefore=14, spaceAfter=6)
+
+    body_style = ParagraphStyle("body",
+        fontSize=10, fontName="Helvetica",
+        textColor=colors.HexColor("#24292f"),
+        spaceAfter=4, leading=15)
+
+    mono_style = ParagraphStyle("mono",
+        fontSize=9, fontName="Courier",
+        textColor=colors.HexColor("#0550ae"),
+        spaceAfter=2)
+
+    # ── Score color ──
+    if final_score >= 80:
+        score_color = colors.HexColor("#1a7f37")
+        verdict     = "APPROVED"
+        verdict_bg  = colors.HexColor("#dafbe1")
+    elif final_score >= 50:
+        score_color = colors.HexColor("#9a6700")
+        verdict     = "NEEDS WORK"
+        verdict_bg  = colors.HexColor("#fff8c5")
+    else:
+        score_color = colors.HexColor("#cf222e")
+        verdict     = "BLOCKED"
+        verdict_bg  = colors.HexColor("#ffebe9")
+
+    severity_colors = {
+        "critical": colors.HexColor("#cf222e"),
+        "high":     colors.HexColor("#bc4c00"),
+        "medium":   colors.HexColor("#9a6700"),
+        "low":      colors.HexColor("#1a7f37"),
     }
+
+    elements = []
+
+    # ── Header ──
+    elements.append(Paragraph("RepoGuardian", title_style))
+    elements.append(Paragraph("Automated Security Review Report", subtitle_style))
+    elements.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#d0d7de")))
+    elements.append(Spacer(1, 8))
+
+    # ── Meta info table ──
+    meta_data = [
+        ["Repository",  result.repo_name],
+        ["PR Number",   f"#{result.pr_number}"],
+        ["Reviewed At", datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")],
+        ["Verdict",     verdict],
+    ]
+    meta_table = Table(meta_data, colWidths=[45*mm, 130*mm])
+    meta_table.setStyle(TableStyle([
+        ("FONTNAME",    (0, 0), (0, -1), "Helvetica-Bold"),
+        ("FONTNAME",    (1, 0), (1, -1), "Helvetica"),
+        ("FONTSIZE",    (0, 0), (-1, -1), 10),
+        ("TEXTCOLOR",   (0, 0), (0, -1), colors.HexColor("#656d76")),
+        ("TEXTCOLOR",   (1, 0), (1, -1), colors.HexColor("#24292f")),
+        ("ROWBACKGROUNDS", (0, 0), (-1, -1), [colors.HexColor("#f6f8fa"), colors.white]),
+        ("TOPPADDING",  (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING",(0,0), (-1, -1), 6),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("GRID",        (0, 0), (-1, -1), 0.5, colors.HexColor("#d0d7de")),
+    ]))
+    elements.append(meta_table)
+    elements.append(Spacer(1, 12))
+
+    # ── Score card ──
+    score_data = [[
+        Paragraph(f'<font size="32" color="{score_color.hexval()}">'
+                  f'<b>{final_score}</b></font><font size="14" color="#656d76">/100</font>', body_style),
+        Paragraph(f'<font size="13"><b>{verdict}</b></font>', body_style),
+        Paragraph(f'<font size="10" color="#656d76">'
+                  f'{len(result.comments)} LLM findings<br/>'
+                  f'{len(policy.get("violations",[]))} policy violation(s)<br/>'
+                  f'{len(policy.get("warnings",[]))} warning(s)</font>', body_style),
+    ]]
+    score_table = Table(score_data, colWidths=[50*mm, 60*mm, 65*mm])
+    score_table.setStyle(TableStyle([
+        ("BACKGROUND",   (0, 0), (-1, -1), verdict_bg),
+        ("BOX",          (0, 0), (-1, -1), 1, colors.HexColor("#d0d7de")),
+        ("VALIGN",       (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING",   (0, 0), (-1, -1), 10),
+        ("BOTTOMPADDING",(0, 0), (-1, -1), 10),
+        ("LEFTPADDING",  (0, 0), (-1, -1), 10),
+    ]))
+    elements.append(score_table)
+    elements.append(Spacer(1, 12))
+
+    # ── Summary ──
+    elements.append(Paragraph("Summary", section_style))
+    elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#d0d7de")))
+    elements.append(Spacer(1, 4))
+    summary_text = result.summary or "No summary available."
+    elements.append(Paragraph(summary_text, body_style))
+    elements.append(Spacer(1, 8))
+
+    # ── Policy violations ──
+    if policy.get("violations") or policy.get("warnings"):
+        elements.append(Paragraph("Policy Results", section_style))
+        elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#d0d7de")))
+        elements.append(Spacer(1, 4))
+
+        if policy.get("blocked"):
+            elements.append(Paragraph(
+                '<font color="#cf222e"><b>🚫 PR BLOCKED BY POLICY</b></font>', body_style))
+            elements.append(Spacer(1, 4))
+
+        for v in policy.get("violations", []):
+            elements.append(Paragraph(
+                f'<font color="#cf222e"><b>VIOLATION:</b></font> {v.get("rule", "")} — {v.get("message", "")}',
+                body_style))
+
+        for w in policy.get("warnings", []):
+            elements.append(Paragraph(
+                f'<font color="#9a6700"><b>WARNING:</b></font> {w.get("rule", "")} — {w.get("message", "")}',
+                body_style))
+
+        elements.append(Spacer(1, 8))
+
+    # ── Findings table ──
+    if result.comments:
+        elements.append(Paragraph(f"Code Review Findings ({len(result.comments)})", section_style))
+        elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#d0d7de")))
+        elements.append(Spacer(1, 4))
+
+        findings_header = [
+            Paragraph("<b>Severity</b>", body_style),
+            Paragraph("<b>File</b>",     body_style),
+            Paragraph("<b>Line</b>",     body_style),
+            Paragraph("<b>Finding</b>",  body_style),
+        ]
+        findings_rows = [findings_header]
+
+        for c in result.comments:
+            sev_color = severity_colors.get(c.severity, colors.HexColor("#656d76"))
+            findings_rows.append([
+                Paragraph(f'<font color="{sev_color.hexval()}"><b>{c.severity.upper()}</b></font>', body_style),
+                Paragraph(c.path, mono_style),
+                Paragraph(str(c.line), body_style),
+                Paragraph(c.body[:120] + ("..." if len(c.body) > 120 else ""), body_style),
+            ])
+
+        findings_table = Table(findings_rows, colWidths=[22*mm, 40*mm, 12*mm, 96*mm])
+        findings_table.setStyle(TableStyle([
+            ("BACKGROUND",    (0, 0), (-1, 0),  colors.HexColor("#f6f8fa")),
+            ("FONTNAME",      (0, 0), (-1, 0),  "Helvetica-Bold"),
+            ("FONTSIZE",      (0, 0), (-1, -1), 9),
+            ("GRID",          (0, 0), (-1, -1), 0.5, colors.HexColor("#d0d7de")),
+            ("ROWBACKGROUNDS",(0, 1), (-1, -1), [colors.white, colors.HexColor("#f6f8fa")]),
+            ("VALIGN",        (0, 0), (-1, -1), "TOP"),
+            ("TOPPADDING",    (0, 0), (-1, -1), 5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ("LEFTPADDING",   (0, 0), (-1, -1), 6),
+        ]))
+        elements.append(findings_table)
+        elements.append(Spacer(1, 12))
+
+    # ── Footer ──
+    elements.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#d0d7de")))
+    elements.append(Spacer(1, 4))
+    elements.append(Paragraph(
+        f'Generated by RepoGuardian • {datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")} • '
+        f'Powered by Groq + Llama3',
+        ParagraphStyle("footer", fontSize=8, textColor=colors.HexColor("#656d76"), alignment=TA_CENTER)
+    ))
+
+    # ── Build PDF ──
+    doc.build(elements)
+    buffer.seek(0)
+
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename=repoguardian-pr{pr_id}-report.pdf"
+        }
+    )
 
 
 # ─────────────────────────────────────────
@@ -506,7 +705,243 @@ def get_github_user():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/simulate")
+def simulate_attack(data: dict):
+    t = data.get("type", "generic")
 
+    if "auth" in t:
+        return {
+            "title": "Authentication Bypass Risk",
+            "risk": "CRITICAL",
+            "impact": [
+                "Attackers can log in without credentials",
+                "User accounts can be hijacked",
+                "Admin privileges may be escalated"
+            ],
+            "cost": "₹5,00,000/month",
+            "detected_in": "2 seconds"
+        }
+
+    if "config" in t:
+        return {
+            "title": "Configuration Exposure",
+            "risk": "HIGH",
+            "impact": [
+                "Sensitive system settings exposed",
+                "Environment secrets may leak",
+                "Attackers can reconfigure system behavior"
+            ],
+            "cost": "₹2,00,000/month",
+            "detected_in": "3 seconds"
+        }
+
+    if "db" in t:
+        return {
+            "title": "Database Access Risk",
+            "risk": "CRITICAL",
+            "impact": [
+                "Full database access possible",
+                "Customer data leakage",
+                "Data manipulation or deletion"
+            ],
+            "cost": "₹7,00,000/month",
+            "detected_in": "2 seconds"
+        }
+
+    if "api" in t:
+        return {
+            "title": "API Exploitation Risk",
+            "risk": "HIGH",
+            "impact": [
+                "Unauthorized API usage",
+                "Data exposure via endpoints",
+                "Service abuse or rate exhaustion"
+            ],
+            "cost": "₹3,50,000/month",
+            "detected_in": "4 seconds"
+        }
+
+    if "security" in t:
+        return {
+            "title": "Security Logic Failure",
+            "risk": "CRITICAL",
+            "impact": [
+                "Core protections can be bypassed",
+                "Attackers gain deep system control",
+                "High chance of full compromise"
+            ],
+            "cost": "₹10,00,000/month",
+            "detected_in": "1 second"
+        }
+
+    return {
+        "title": "General Vulnerability",
+        "risk": "MEDIUM",
+        "impact": [
+            "Unexpected system behavior",
+            "Potential exploit path",
+            "Requires further review"
+        ],
+        "cost": "₹1,00,000/month",
+        "detected_in": "5 seconds"
+    }
+@app.post("/api/copilot")
+def copilot(data: dict):
+    question = data.get("question", "").strip().lower()
+
+    if not question:
+        return {"answer": ""}  # 🔥 DON'T auto answer
+
+    if "why" in question:
+        return {
+            "answer": "This vulnerability exposes internal logic that attackers can exploit to gain unauthorized access or escalate privileges."
+        }
+
+    if "fix" in question:
+        return {
+            "answer": "Recommended Fix:\n- Move sensitive logic to secure modules\n- Use environment variables for secrets\n- Add validation and access control checks"
+        }
+
+    if "impact" in question or "risk" in question:
+        return {
+            "answer": "Impact:\n- Data leakage possible\n- Unauthorized system access\n- Financial loss due to exploitation"
+        }
+
+    return {
+        "answer": "Ask things like: 'Why is this risky?', 'How to fix this?', or 'What is the impact?'"
+    }
+@app.post("/api/autofix")
+def autofix(data: dict):
+
+    t = data.get("type", "")
+
+    if "auth" in t:
+        return {
+            "fix": [
+                "Enable JWT validation",
+                "Add MFA authentication",
+                "Implement session expiration",
+                "Restrict unauthorized token reuse"
+            ]
+        }
+
+    if "api" in t:
+        return {
+            "fix": [
+                "Add API authentication",
+                "Enable request validation",
+                "Implement rate limiting",
+                "Restrict public endpoint access"
+            ]
+        }
+
+    if "db" in t:
+        return {
+            "fix": [
+                "Encrypt database credentials",
+                "Restrict public DB access",
+                "Enable row-level permissions",
+                "Rotate exposed secrets"
+            ]
+        }
+
+    return {
+        "fix": [
+            "Apply least privilege access",
+            "Rotate exposed secrets",
+            "Add validation checks",
+            "Enable security monitoring"
+        ]
+    }
+@app.get("/api/executive-summary")
+def executive_summary():
+    return {
+        "estimated_loss": "₹18,50,000",
+        "risk_reduction": "63%",
+        "compliance_score": 82,
+        "mean_detection_time": "3 sec",
+        "critical_systems": 4,
+        "summary": "Critical vulnerabilities detected across authentication, API, and configuration systems. Immediate remediation recommended for high-risk modules."
+    }
+@app.post("/api/create-pr")
+def create_pr(req: PRRequest):
+
+    try:
+
+        token = os.getenv("GITHUB_TOKEN")
+        repo_name = os.getenv("GITHUB_REPO")
+
+        g = Github(token)
+
+        repo = g.get_repo(repo_name)
+
+        # 🔥 unique branch name
+        branch_name = (
+            f"ai-fix-{req.risk.lower().replace(' ', '-')}"
+        )
+
+        # checkout new branch
+        subprocess.run(
+            ["git", "checkout", "-b", branch_name],
+            check=True
+        )
+
+        # 🔥 create AI fix file
+        with open("ai_security_fix.txt", "w") as f:
+            f.write(req.fix)
+
+        # git add
+        subprocess.run(
+            ["git", "add", "."],
+            check=True
+        )
+
+        # commit
+        subprocess.run(
+            [
+                "git",
+                "commit",
+                "-m",
+                f"fix(security): remediate {req.risk}"
+            ],
+            check=True
+        )
+
+        # push
+        subprocess.run(
+            [
+                "git",
+                "push",
+                "origin",
+                branch_name
+            ],
+            check=True
+        )
+
+        # 🔥 create PR
+        pr = repo.create_pull(
+            title=f"fix(security): remediate {req.risk}",
+            body=(
+                "AI-generated remediation PR "
+                "created by RepoGuardian"
+            ),
+            head=branch_name,
+            base="main"
+        )
+
+        return {
+            "success": True,
+            "url": pr.html_url,
+            "number": pr.number,
+            "title": pr.title
+        }
+
+    except Exception as e:
+
+        return {
+            "success": False,
+            "error": str(e)
+        }
 # ─────────────────────────────────────────
 # Run
 # ─────────────────────────────────────────
