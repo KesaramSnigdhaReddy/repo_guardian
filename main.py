@@ -1212,22 +1212,80 @@ RepoGuardian Autonomous Security Engine
         }
 @app.post("/api/merge-pr")
 def merge_pr(data: dict):
-  try:
 
-    pr.merge(merge_method="squash")
+    try:
 
-  except Exception:
+        pr_number = data.get("pr_number")
 
-    repo.get_git_ref(
-        f"heads/{pr.head.ref}"
-    ).edit(
-        sha=repo.get_branch("main").commit.sha,
-        force=True
-    )
+        if not pr_number:
+            return {
+                "success": False,
+                "error": "Missing PR number"
+            }
 
-    pr = repo.get_pull(pr_number)
+        token = os.getenv("GITHUB_TOKEN")
+        repo_name = os.getenv("GITHUB_REPO")
 
-    pr.merge(merge_method="squash")
+        g = Github(token)
+
+        repo = g.get_repo(repo_name)
+
+        pr = repo.get_pull(pr_number)
+
+        try:
+
+            # NORMAL MERGE
+            pr.merge(
+                merge_method="squash"
+            )
+
+        except Exception:
+
+            # FORCE UPDATE BRANCH
+            branch_ref = repo.get_git_ref(
+                f"heads/{pr.head.ref}"
+            )
+
+            main_sha = repo.get_branch(
+                "main"
+            ).commit.sha
+
+            branch_ref.edit(
+                sha=main_sha,
+                force=True
+            )
+
+            # REFRESH PR
+            pr = repo.get_pull(pr_number)
+
+            # RETRY MERGE
+            pr.merge(
+                merge_method="squash"
+            )
+
+        add_activity(
+            f"Pull Request #{pr_number} merged successfully",
+            "success"
+        )
+
+        return {
+            "success": True,
+            "message": "PR merged successfully"
+        }
+
+    except Exception as e:
+
+        print("MERGE ERROR:", str(e))
+
+        add_activity(
+            f"Merge failed: {str(e)}",
+            "critical"
+        )
+
+        return {
+            "success": False,
+            "error": str(e)
+        }
 @app.get("/api/activity")
 def get_activity():
     return ACTIVITY_FEED
