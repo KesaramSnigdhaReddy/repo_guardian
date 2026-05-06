@@ -1259,9 +1259,34 @@ def merge_pr(data: dict):
             pr = repo.get_pull(pr_number)
 
             # RETRY MERGE
-            pr.merge(
-                merge_method="squash"
-            )
+            try:
+
+              pr.merge(
+                 merge_method="squash"
+                )
+
+            except Exception:
+
+             print("FORCE MERGE ACTIVATED")
+
+        branch_ref = repo.get_git_ref(
+            f"heads/{pr.head.ref}"
+        )
+
+        main_sha = repo.get_branch(
+            "main"
+        ).commit.sha
+
+        branch_ref.edit(
+            sha=main_sha,
+            force=True
+        )
+
+        pr = repo.get_pull(pr_number)
+
+        pr.merge(
+            merge_method="squash"
+        )
 
         add_activity(
             f"Pull Request #{pr_number} merged successfully",
