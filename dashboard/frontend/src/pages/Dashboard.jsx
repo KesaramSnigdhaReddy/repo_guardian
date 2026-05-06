@@ -18,13 +18,14 @@ export default function Dashboard() {
 
   const [data, setData] = useState(null);
   const [agents, setAgents] = useState([]);
+  const [activity, setActivity] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const [toast, setToast] = useState(null);
   const [scanning, setScanning] = useState(false);
 
-  // 🔥 Executive dashboard state
   const [executive, setExecutive] = useState(null);
 
   // 🔥 Fetch dashboard
@@ -50,18 +51,17 @@ export default function Dashboard() {
 
   };
 
-  // 🔥 Initial load
   useEffect(() => {
 
     fetchDashboard();
 
-    // Executive summary
+    // 🔥 Executive summary
     fetch("http://localhost:8000/api/executive-summary")
       .then(r => r.json())
       .then(setExecutive)
       .catch(console.error);
 
-    // Agent polling
+    // 🔥 Agent polling
     const poll = () => {
 
       getAgentStatus()
@@ -74,7 +74,29 @@ export default function Dashboard() {
 
     const id = setInterval(poll, 3000);
 
-    return () => clearInterval(id);
+    // 🔥 Live activity polling
+    const pollActivity = () => {
+
+      fetch("http://localhost:8000/api/activity")
+        .then(r => r.json())
+        .then(setActivity)
+        .catch(() => {});
+
+    };
+
+    pollActivity();
+
+    const activityId = setInterval(
+      pollActivity,
+      2000
+    );
+
+    return () => {
+
+      clearInterval(id);
+      clearInterval(activityId);
+
+    };
 
   }, []);
 
@@ -112,7 +134,6 @@ export default function Dashboard() {
 
   };
 
-  // 🔥 Loading
   if (loading) {
     return (
       <div style={{
@@ -125,7 +146,6 @@ export default function Dashboard() {
     );
   }
 
-  // 🔥 Error
   if (error) {
     return (
       <div style={{
@@ -138,7 +158,6 @@ export default function Dashboard() {
     );
   }
 
-  // 🔥 Empty
   if (!data) {
     return (
       <div style={{
@@ -150,7 +169,6 @@ export default function Dashboard() {
     );
   }
 
-  // 🔥 Shared styles
   const S = {
 
     section: {
@@ -281,20 +299,12 @@ export default function Dashboard() {
         gap: "12px"
       }}>
 
-        {/* Trend */}
         <div style={S.section}>
 
           <div style={S.sectionHeader}>
 
             <span style={S.sectionTitle}>
               Security Trend
-            </span>
-
-            <span style={{
-              fontSize: "11px",
-              color: "#484f58"
-            }}>
-              {(data.score_history || []).length} data points
             </span>
 
           </div>
@@ -307,20 +317,12 @@ export default function Dashboard() {
 
         </div>
 
-        {/* Risk Analytics */}
         <div style={S.section}>
 
           <div style={S.sectionHeader}>
 
             <span style={S.sectionTitle}>
               Risk Distribution Analytics
-            </span>
-
-            <span style={{
-              fontSize: "11px",
-              color: "#484f58"
-            }}>
-              executive threat visibility
             </span>
 
           </div>
@@ -344,13 +346,6 @@ export default function Dashboard() {
             Active Threat Intelligence
           </span>
 
-          <span style={{
-            fontSize: "11px",
-            color: "#484f58"
-          }}>
-            {(data.findings || []).length} shown · {data.open_findings} total
-          </span>
-
         </div>
 
         <div style={{
@@ -363,20 +358,13 @@ export default function Dashboard() {
 
       </div>
 
-      {/* 🔥 AI Remediation Engine */}
+      {/* 🔥 AI Remediation */}
       <div style={S.section}>
 
         <div style={S.sectionHeader}>
 
           <span style={S.sectionTitle}>
             AI Remediation Engine
-          </span>
-
-          <span style={{
-            fontSize: "11px",
-            color: "#484f58"
-          }}>
-            autonomous vulnerability fixing
           </span>
 
         </div>
@@ -400,13 +388,6 @@ export default function Dashboard() {
             Compliance & Governance
           </span>
 
-          <span style={{
-            fontSize: "11px",
-            color: "#484f58"
-          }}>
-            one-click enterprise export
-          </span>
-
         </div>
 
         <div style={{
@@ -416,17 +397,15 @@ export default function Dashboard() {
           flexWrap: "wrap"
         }}>
 
-          {/* SOC2 */}
           <button
             style={S.btn(true)}
             onClick={() =>
-              window.open("http://localhost:8000/api/compliance/soc2")
+              window.open("http://localhost:8000/api/export-report")
             }
           >
-            📋 SOC 2 Report
+            📋 Export Security Report
           </button>
 
-          {/* SBOM */}
           <button
             style={S.btn()}
             onClick={() =>
@@ -436,7 +415,6 @@ export default function Dashboard() {
             📦 SBOM Export
           </button>
 
-          {/* Scan */}
           <button
             style={S.btn()}
             onClick={handleScanHistory}
@@ -447,40 +425,17 @@ export default function Dashboard() {
               : "🔍 Scan Git History"}
           </button>
 
-          {/* Refresh */}
-          <button
-            style={S.btn()}
-            onClick={() => {
-
-              fetchDashboard();
-
-              setToast("✅ Dashboard refreshed");
-
-              setTimeout(() => setToast(null), 2000);
-
-            }}
-          >
-            🔄 Refresh
-          </button>
-
         </div>
 
       </div>
 
-      {/* 🔥 Live Activity Feed */}
+      {/* 🔥 Live Activity */}
       <div style={S.section}>
 
         <div style={S.sectionHeader}>
 
           <span style={S.sectionTitle}>
             Live Security Activity
-          </span>
-
-          <span style={{
-            fontSize: "11px",
-            color: "#484f58"
-          }}>
-            real-time monitoring
           </span>
 
         </div>
@@ -492,93 +447,62 @@ export default function Dashboard() {
           gap: "12px"
         }}>
 
-          {[
-  {
-    icon: "🔍",
-    text: "Repository scan completed",
-    time: "2 sec ago",
-    color: "#58a6ff"
-  },
+          {activity.map((item, idx) => (
 
-  {
-    icon: "⚠️",
-    text: "Critical API vulnerability detected",
-    time: "8 sec ago",
-    color: "#ff4d4f"
-  },
+            <div
+              key={idx}
+              style={{
+                background: "#0d1117",
+                border: "1px solid #21262d",
+                padding: "14px",
+                borderRadius: "10px",
+                color: "#c9d1d9",
+                fontSize: "13px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center"
+              }}
+            >
 
-  {
-    icon: "🛠️",
-    text: "AI remediation generated secure patch",
-    time: "15 sec ago",
-    color: "#3fb950"
-  },
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px"
+              }}>
 
-  {
-    icon: "📦",
-    text: "SOC2 compliance report exported",
-    time: "1 min ago",
-    color: "#d29922"
-  },
+                <span style={{
+                  fontSize: "18px"
+                }}>
+                  {
+                    item.level === "critical"
+                      ? "🚨"
+                      : item.level === "success"
+                      ? "✅"
+                      : "📡"
+                  }
+                </span>
 
-  {
-    icon: "🤖",
-    text: "AI Copilot analyzed repository risks",
-    time: "2 min ago",
-    color: "#a371f7"
-  }
+                <span>
+                  {item.message}
+                </span>
 
-].map((item, idx) => (
+              </div>
 
-  <div
-    key={idx}
-    style={{
-      background: "#0d1117",
-      border: "1px solid #21262d",
-      padding: "14px",
-      borderRadius: "10px",
-      color: "#c9d1d9",
-      fontSize: "13px",
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center"
-    }}
-  >
+              <span style={{
+                color: "#8b949e",
+                fontSize: "11px"
+              }}>
+                {item.time}
+              </span>
 
-    <div style={{
-      display: "flex",
-      alignItems: "center",
-      gap: "10px"
-    }}>
+            </div>
 
-      <span style={{
-        fontSize: "18px"
-      }}>
-        {item.icon}
-      </span>
-
-      <span>
-        {item.text}
-      </span>
-
-    </div>
-
-    <span style={{
-      color: "#8b949e",
-      fontSize: "11px"
-    }}>
-      {item.time}
-    </span>
-
-  </div>
-
-))}
+          ))}
 
         </div>
 
       </div>
 
-      {/* 🔥 AI Copilot */}
       <Copilot />
 
     </div>

@@ -275,18 +275,64 @@ export default function AutoFixPanel() {
             </button>
 
             <button
-              onClick={() => setShowPR(true)}
-              style={{
-                background: "#21262d",
-                border: "1px solid #30363d",
-                color: "white",
-                padding: "12px 18px",
-                borderRadius: "8px",
-                cursor: "pointer"
-              }}
-            >
-              Create Secure PR
-            </button>
+  onClick={async () => {
+
+    try {
+
+      const res = await fetch(
+        "http://localhost:8000/api/create-pr",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            risk: selected.risk,
+            fix: selected.after
+          })
+        }
+      );
+
+      const data = await res.json();
+
+      console.log(data);
+
+      if (data.success) {
+
+        alert(
+          `✅ Pull Request Created\n\nPR #${data.number}`
+        );
+
+        window.open(data.url, "_blank");
+
+      } else {
+
+        alert(
+          `❌ PR Creation Failed\n\n${data.error}`
+        );
+
+      }
+
+    } catch (err) {
+
+      console.error(err);
+
+      alert("Backend connection failed");
+
+    }
+
+  }}
+  style={{
+    background: "#21262d",
+    border: "1px solid #30363d",
+    color: "white",
+    padding: "12px 18px",
+    borderRadius: "8px",
+    cursor: "pointer"
+  }}
+>
+  Create Secure PR
+</button>
 
           </div>
 
