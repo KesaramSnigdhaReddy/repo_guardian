@@ -1213,48 +1213,49 @@ RepoGuardian Autonomous Security Engine
 @app.post("/api/merge-pr")
 def merge_pr(data: dict):
 
-    pr_number = data.get("pr_number")
+    try:
 
-    if not pr_number:
-        return {"error": "Missing PR number"}
+        pr_number = data.get("pr_number")
 
-    repo = "muski630346/repo_guardian"
+        if not pr_number:
+            return {
+                "success": False,
+                "error": "Missing PR number"
+            }
 
-    token = os.getenv("GITHUB_TOKEN")
-    if not token:
-        raise HTTPException(status_code=500, detail="GITHUB_TOKEN is not set")
+        token = os.getenv("GITHUB_TOKEN")
+        repo_name = os.getenv("GITHUB_REPO")
 
-    headers = {
-        "Authorization": f"token {token}",
-        "Accept": "application/vnd.github+json"
-    }
+        g = Github(token)
 
-    merge_url = f"https://api.github.com/repos/{repo}/pulls/{pr_number}/merge"
+        repo = g.get_repo(repo_name)
 
-    response = requests.put(
-        merge_url,
-        headers=headers,
-        json={
-            "commit_title": f"merge: secure remediation PR #{pr_number}",
-            "merge_method": "squash"
-        }
-    )
+        pr = repo.get_pull(pr_number)
 
-    if response.status_code in [200, 201]:
+        # MERGE PR
+        merge_result = pr.merge()
+
         add_activity(
-            f"PR #{pr_number} merged into main",
+            f"Pull Request #{pr_number} merged successfully",
             "success"
         )
 
         return {
-            "status": "merged",
-            "message": f"PR #{pr_number} successfully merged"
+            "success": True,
+            "message": "PR merged successfully"
         }
 
-    return {
-        "status": "failed",
-        "details": response.json()
-    }
+    except Exception as e:
+
+        add_activity(
+            f"Merge failed: {str(e)}",
+            "critical"
+        )
+
+        return {
+            "success": False,
+            "error": str(e)
+        }
 @app.get("/api/activity")
 def get_activity():
     return ACTIVITY_FEED
