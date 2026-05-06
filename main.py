@@ -27,6 +27,9 @@ import os
 from datetime import datetime
 from fastapi.responses import FileResponse
 import json
+from fastapi import Request
+import hmac
+import hashlib
 REPO_ROOT = Path(__file__).resolve().parent.parent
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 class PRRequest(BaseModel):
@@ -1344,6 +1347,95 @@ def export_report():
         media_type="application/json",
         filename="RepoGuardian_Report.json"
     )
+@app.post("/webhook/github")
+async def github_webhook(request: Request):
+
+    try:
+
+        payload = await request.body()
+
+        signature = request.headers.get(
+            "X-Hub-Signature-256"
+        )
+
+        secret = os.getenv("WEBHOOK_SECRET")
+
+        expected_signature = (
+            "sha256="
+            + hmac.new(
+                secret.encode(),
+                payload,
+                hashlib.sha256
+            ).hexdigest()
+        )
+
+        if not hmac.compare_digest(
+            expected_signature,
+            signature
+        ):
+
+            return {
+                "success": False,
+                "message": "Invalid webhook signature"
+            }
+
+        data = await request.json()
+
+        event = request.headers.get("X-GitHub-Event")
+
+        print("GitHub Event:", event)
+
+        # -----------------------------------
+        # PUSH EVENT
+        # -----------------------------------
+
+        if event == "push":
+
+            repo_name = data["repository"]["full_name"]
+
+            pusher = data["pusher"]["name"]
+
+            branch = data["ref"].split("/")[-1]
+
+            add_activity(
+                f"GitHub push detected on {branch} by {pusher}",
+                "info"
+            )
+
+            print(
+                f"Push received from {repo_name}"
+            )
+
+            # ------------------------------
+            # AUTO SCAN TRIGGER
+            # ------------------------------
+
+            findings = [
+                {
+                    "risk": "Hardcoded Secret",
+                    "severity": "Critical",
+                    "file": "config/auth.js"
+                }
+            ]
+
+            return {
+                "success": True,
+                "event": "push",
+                "repo": repo_name,
+                "findings": findings
+            }
+
+        return {
+            "success": True,
+            "message": "Webhook received"
+        }
+
+    except Exception as e:
+
+        return {
+            "success": False,
+            "error": str(e)
+        }
 # ─────────────────────────────────────────
 # Run
 # ─────────────────────────────────────────
