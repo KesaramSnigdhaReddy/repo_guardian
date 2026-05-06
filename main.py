@@ -1212,52 +1212,22 @@ RepoGuardian Autonomous Security Engine
         }
 @app.post("/api/merge-pr")
 def merge_pr(data: dict):
+  try:
 
-    try:
+    pr.merge(merge_method="squash")
 
-        pr_number = data.get("pr_number")
+  except Exception:
 
-        if not pr_number:
-            return {
-                "success": False,
-                "error": "Missing PR number"
-            }
+    repo.get_git_ref(
+        f"heads/{pr.head.ref}"
+    ).edit(
+        sha=repo.get_branch("main").commit.sha,
+        force=True
+    )
 
-        token = os.getenv("GITHUB_TOKEN")
-        repo_name = os.getenv("GITHUB_REPO")
+    pr = repo.get_pull(pr_number)
 
-        g = Github(token)
-
-        repo = g.get_repo(repo_name)
-
-        pr = repo.get_pull(pr_number)
-
-        # MERGE PR
-        merge_result = pr.merge(
-    merge_method="squash"
-)
-
-        add_activity(
-            f"Pull Request #{pr_number} merged successfully",
-            "success"
-        )
-
-        return {
-            "success": True,
-            "message": "PR merged successfully"
-        }
-
-    except Exception as e:
-
-        add_activity(
-            f"Merge failed: {str(e)}",
-            "critical"
-        )
-
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    pr.merge(merge_method="squash")
 @app.get("/api/activity")
 def get_activity():
     return ACTIVITY_FEED
