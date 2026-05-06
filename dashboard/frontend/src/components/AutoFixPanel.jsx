@@ -57,6 +57,8 @@ export default function AutoFixPanel() {
 
   const [showPR, setShowPR] = useState(false);
 
+  const [prData, setPrData] = useState(null);
+
   return (
 
     <div style={{
@@ -275,64 +277,62 @@ export default function AutoFixPanel() {
             </button>
 
             <button
-  onClick={async () => {
+              onClick={async () => {
 
-    try {
+                try {
 
-      const res = await fetch(
-        "http://localhost:8000/api/create-pr",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            risk: selected.risk,
-            fix: selected.after
-          })
-        }
-      );
+                  const res = await fetch(
+                    "http://localhost:8000/api/create-pr",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json"
+                      },
+                      body: JSON.stringify({
+                        risk: selected.risk,
+                        fix: selected.after
+                      })
+                    }
+                  );
 
-      const data = await res.json();
+                  const data = await res.json();
 
-      console.log(data);
+                  console.log(data);
 
-      if (data.success) {
+                  if (data.success) {
 
-        alert(
-          `✅ Pull Request Created\n\nPR #${data.number}`
-        );
+                    setPrData(data);
 
-        window.open(data.url, "_blank");
+                    setShowPR(true);
 
-      } else {
+                  } else {
 
-        alert(
-          `❌ PR Creation Failed\n\n${data.error}`
-        );
+                    alert(
+                      `❌ PR Creation Failed\n\n${data.error}`
+                    );
 
-      }
+                  }
 
-    } catch (err) {
+                } catch (err) {
 
-      console.error(err);
+                  console.error(err);
 
-      alert("Backend connection failed");
+                  alert("Backend connection failed");
 
-    }
+                }
 
-  }}
-  style={{
-    background: "#21262d",
-    border: "1px solid #30363d",
-    color: "white",
-    padding: "12px 18px",
-    borderRadius: "8px",
-    cursor: "pointer"
-  }}
->
-  Create Secure PR
-</button>
+              }}
+              style={{
+                background: "#21262d",
+                border: "1px solid #30363d",
+                color: "white",
+                padding: "12px 18px",
+                borderRadius: "8px",
+                cursor: "pointer"
+              }}
+            >
+              Create Secure PR
+            </button>
 
           </div>
 
@@ -356,7 +356,7 @@ export default function AutoFixPanel() {
 
       </div>
 
-      {/* 🔥 PR Modal */}
+      {/* PR Modal */}
       {showPR && (
 
         <div style={{
@@ -377,50 +377,29 @@ export default function AutoFixPanel() {
             overflow: "hidden"
           }}>
 
-            {/* Header */}
             <div style={{
               padding: "18px 24px",
-              borderBottom: "1px solid #21262d",
-              display: "flex",
-              justifyContent: "space-between"
+              borderBottom: "1px solid #21262d"
             }}>
 
-              <div>
-
-                <div style={{
-                  color: "white",
-                  fontWeight: 700,
-                  fontSize: "20px"
-                }}>
-                  ✅ Secure Pull Request Created
-                </div>
-
-                <div style={{
-                  color: "#8b949e",
-                  marginTop: "6px",
-                  fontSize: "13px"
-                }}>
-                  AI-generated remediation PR ready for merge
-                </div>
-
+              <div style={{
+                color: "white",
+                fontWeight: 700,
+                fontSize: "20px"
+              }}>
+                ✅ Secure Pull Request Created
               </div>
 
-              <button
-                onClick={() => setShowPR(false)}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "#8b949e",
-                  fontSize: "22px",
-                  cursor: "pointer"
-                }}
-              >
-                ×
-              </button>
+              <div style={{
+                color: "#8b949e",
+                marginTop: "6px",
+                fontSize: "13px"
+              }}>
+                AI-generated remediation PR ready for merge
+              </div>
 
             </div>
 
-            {/* Body */}
             <div style={{
               padding: "24px"
             }}>
@@ -442,101 +421,82 @@ export default function AutoFixPanel() {
                   fontWeight: 600,
                   fontSize: "16px"
                 }}>
-                  fix(security): remediate {selected.risk}
+                  {prData?.title}
                 </div>
 
               </div>
 
-              {/* Checks */}
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "12px",
-                marginBottom: "20px"
-              }}>
+              <button
+                onClick={() => {
+                  window.open(prData?.url, "_blank");
+                }}
+                style={{
+                  background: "#1f6feb",
+                  border: "none",
+                  color: "white",
+                  padding: "12px 20px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  marginRight: "12px"
+                }}
+              >
+                Open GitHub PR
+              </button>
 
-                {[
-                  "Security validation passed",
-                  "Compliance checks passed",
-                  "Secrets scan clean",
-                  "AI remediation verified"
-                ].map((item, idx) => (
+              <button
+                onClick={async () => {
 
-                  <div
-                    key={idx}
-                    style={{
-                      background: "#0d1117",
-                      border: "1px solid #21262d",
-                      padding: "14px",
-                      borderRadius: "10px",
-                      color: "#3fb950",
-                      fontSize: "13px"
-                    }}
-                  >
-                    ✅ {item}
-                  </div>
+                  try {
 
-                ))}
+                    const response = await fetch(
+                      "http://localhost:8000/api/merge-pr",
+                      {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                          pr_number: prData.number
+                        })
+                      }
+                    );
 
-              </div>
+                    const data = await response.json();
 
-              {/* Diff */}
-              <div style={{
-                background: "#0d1117",
-                border: "1px solid #21262d",
-                borderRadius: "12px",
-                overflow: "hidden",
-                marginBottom: "20px"
-              }}>
+                    if (data.success) {
 
-                <div style={{
-                  padding: "12px 16px",
-                  borderBottom: "1px solid #21262d",
-                  color: "#8b949e",
-                  fontSize: "12px"
-                }}>
-                  AI Generated Secure Diff
-                </div>
+                      alert("✅ Pull Request Merged");
 
-                <pre style={{
-                  padding: "16px",
-                  color: "#3fb950",
-                  overflowX: "auto"
-                }}>
-{selected.after}
-                </pre>
+                      setShowPR(false);
 
-              </div>
+                    } else {
 
-              {/* Footer */}
-              <div style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center"
-              }}>
+                      alert(`❌ Merge Failed\n\n${data.error}`);
 
-                <div style={{
-                  color: "#8b949e",
-                  fontSize: "12px"
-                }}>
-                  RepoGuardian AI • security remediation engine
-                </div>
+                    }
 
-                <button
-                  style={{
-                    background: "#238636",
-                    border: "none",
-                    color: "white",
-                    padding: "12px 20px",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    fontWeight: 600
-                  }}
-                >
-                  Merge Secure PR
-                </button>
+                  } catch (err) {
 
-              </div>
+                    console.error(err);
+
+                    alert("Merge API failed");
+
+                  }
+
+                }}
+                style={{
+                  background: "#238636",
+                  border: "none",
+                  color: "white",
+                  padding: "12px 20px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontWeight: 600
+                }}
+              >
+                Merge Secure PR
+              </button>
 
             </div>
 
