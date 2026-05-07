@@ -1174,16 +1174,16 @@ RepoGuardian Autonomous Security Engine
         # ----------------------------------------
 
         subprocess.run(
-            [
-                "git",
-                "push",
-                "-u",
-                "origin",
-                branch_name
-            ],
-            check=True,
-            cwd=REPO_ROOT
-        )
+    [
+        "git",
+        "push",
+        "-u",
+        "origin",
+        "HEAD:" + branch_name
+    ],
+    check=True,
+    cwd=REPO_ROOT
+)
 
         add_activity(
             "Secure remediation branch pushed to GitHub",
