@@ -1253,16 +1253,7 @@ RepoGuardian Autonomous Security Engine
             "success": False,
             "error": str(e)
         }
-    slack_message = (
-    "🚨 RepoGuardian Security Alert\n\n"
-    f"Repository: {repo_name}\n\n"
-    f"Risk: {req.risk}\n\n"
-    "AI remediation PR created:\n"
-    f"{pr.html_url}\n\n"
-    "Status: ACTIVE"
-      )
-
-    send_slack_alert(slack_message)
+    
 @app.post("/api/merge-pr")
 def merge_pr(data: dict):
 
@@ -1381,7 +1372,16 @@ def comment_pr(data: dict):
         pr = repo.get_pull(pr_number)
 
         pr.create_issue_comment(message)
+        slack_message = (
+         "🚨 RepoGuardian Security Alert\n\n"
+          f"Repository: {repo_name}\n\n"
+          f"Risk: {req.risk}\n\n"
+          "AI remediation PR created:\n"
+          f"{pr.html_url}\n\n"
+           "Status: ACTIVE"
+         )
 
+        send_slack_alert(slack_message)
         add_activity(
             f"Comment added to PR #{pr_number}",
             "success"
