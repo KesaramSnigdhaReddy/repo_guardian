@@ -33,7 +33,7 @@ import hashlib
 from agents.orchestrator_agent import orchestrator_agent
 from agents.memory_agent import memory_agent
 from fastapi import FastAPI
-
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 app = FastAPI()
 
 activities = []
@@ -187,7 +187,32 @@ class ReviewRequest(BaseModel):
     repo: str
     pr_number: int
 
+async def send_security_email(subject, body):
 
+    try:
+
+        message = MessageSchema(
+
+            subject=subject,
+
+            recipients=[
+                os.getenv("MAIL_USERNAME")
+            ],
+
+            body=body,
+
+            subtype="html"
+        )
+
+        fm = FastMail(mail_conf)
+
+        await fm.send_message(message)
+
+        print("Security email sent")
+
+    except Exception as e:
+
+        print("Email failed:", e)
 # ─────────────────────────────────────────
 # Health check
 # ─────────────────────────────────────────
@@ -1092,7 +1117,7 @@ def executive_summary():
         "summary": "Critical vulnerabilities detected across authentication, API, and configuration systems. Immediate remediation recommended for high-risk modules."
     }
 @app.post("/api/create-pr")
-def create_pr(req: PRRequest):
+async def create_pr(req: PRRequest):
 
     print("REPO ROOT:", REPO_ROOT)
 
@@ -1274,6 +1299,22 @@ RepoGuardian Autonomous Security Engine
             "title": pr.title,
             "branch": branch_name
         }
+        await send_security_email(
+
+    "🚨 RepoGuardian Security Alert",
+
+    (
+        "<h2>RepoGuardian Autonomous Security Alert</h2>"
+
+        f"<p><b>Repository:</b> {repo_name}</p>"
+
+        f"<p><b>Risk:</b> {req.risk}</p>"
+
+        "<p><b>Status:</b> ACTIVE</p>"
+
+        f'<p><a href="{pr.html_url}">View Secure Pull Request</a></p>'
+    )
+)
 
     except Exception as e:
 

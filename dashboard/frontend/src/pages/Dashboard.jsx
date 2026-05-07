@@ -287,7 +287,14 @@ export default function Dashboard() {
         <div style={{
           padding: "16px 20px"
         }}>
-          <AgentStatusPanel /> 
+         <AgentStatusPanel
+  agents={{
+    "Orchestrator Agent": "ACTIVE",
+    "Security Agent": "SCANNING",
+    "Repo Health Agent": "ACTIVE",
+    "Memory Agent": "IDLE"
+  }}
+/>
         </div>
 
       </div>
