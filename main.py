@@ -1098,7 +1098,7 @@ def create_pr(req: PRRequest):
         )
 
         add_activity(
-            f"AI remediation branch created: {branch_name}",
+            f"[Orchestrator Agent] Autonomous remediation branch created: {branch_name}",
             "info"
         )
 
@@ -1165,7 +1165,7 @@ RepoGuardian Autonomous Security Engine
         )
 
         add_activity(
-            f"Security remediation committed for {req.risk}",
+            f"[AutoFix Agent] Security remediation committed for {req.risk}",
             "success"
         )
 
@@ -1186,7 +1186,7 @@ RepoGuardian Autonomous Security Engine
 )
 
         add_activity(
-            "Secure remediation branch pushed to GitHub",
+            "[GitHub Agent] Secure remediation branch pushed to GitHub",
             "success"
         )
 
@@ -1245,7 +1245,7 @@ RepoGuardian Autonomous Security Engine
         )
 
         add_activity(
-            f"Pull Request #{pr.number} opened successfully",
+            f"[AutoFix Agent] Autonomous Pull Request #{pr.number} opened successfully",
             "success"
         )
 
@@ -1260,7 +1260,7 @@ RepoGuardian Autonomous Security Engine
     except Exception as e:
 
         add_activity(
-            f"PR creation failed: {str(e)}",
+            f"[Security Agent] Autonomous remediation pipeline failed: {str(e)}",
             "critical"
         )
 
