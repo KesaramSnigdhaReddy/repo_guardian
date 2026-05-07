@@ -1216,6 +1216,15 @@ RepoGuardian Autonomous Security Engine
             head=branch_name,
             base=repo.default_branch
         )
+        slack_message = (
+         "🚨 RepoGuardian Security Alert\n\n"
+          f"Repository: {repo_name}\n\n"
+          f"Risk: {req.risk}\n\n"
+          "AI remediation PR created:\n"
+          f"{pr.html_url}\n\n"
+           "Status: ACTIVE"
+         )
+        send_slack_message(slack_message)
         comment_body = (
             "# RepoGuardian Autonomous Security Review\n\n"
             "## AI Security Remediation Complete\n\n"
@@ -1372,16 +1381,7 @@ def comment_pr(data: dict):
         pr = repo.get_pull(pr_number)
 
         pr.create_issue_comment(message)
-        slack_message = (
-         "🚨 RepoGuardian Security Alert\n\n"
-          f"Repository: {repo_name}\n\n"
-          f"Risk: {req.risk}\n\n"
-          "AI remediation PR created:\n"
-          f"{pr.html_url}\n\n"
-           "Status: ACTIVE"
-         )
-
-        send_slack_alert(slack_message)
+       
         add_activity(
             f"Comment added to PR #{pr_number}",
             "success"
