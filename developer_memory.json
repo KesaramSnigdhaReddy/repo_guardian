@@ -2,15 +2,22 @@
     {
         "developer": "muski630346",
         "issue": "Hardcoded Secret",
-        "count": 2,
+        "count": 3,
         "first_seen": "2026-05-07 15:30:39",
-        "last_seen": "2026-05-07 16:17:37"
+        "last_seen": "2026-05-07 16:54:10"
     },
     {
         "developer": "muski630346",
         "issue": "SQL Injection",
-        "count": 2,
+        "count": 3,
         "first_seen": "2026-05-07 15:30:39",
-        "last_seen": "2026-05-07 16:17:37"
+        "last_seen": "2026-05-07 16:54:10"
+    },
+    {
+        "developer": "muski630346",
+        "issue": "Open API Access",
+        "count": 1,
+        "first_seen": "2026-05-07 16:54:10",
+        "last_seen": "2026-05-07 16:54:10"
     }
 ]
