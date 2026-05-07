@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 # Must load before any agent imports
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
-
+import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -53,7 +53,27 @@ def add_activity(message, level="info"):
     # keep latest only
     if len(ACTIVITY_FEED) > 25:
         ACTIVITY_FEED.pop()
+def send_slack_alert(message):
 
+    webhook = os.getenv("SLACK_WEBHOOK_URL")
+
+    if not webhook:
+        return
+
+    payload = {
+        "text": message
+    }
+
+    try:
+
+        requests.post(
+            webhook,
+            json=payload
+        )
+
+    except Exception as e:
+
+        print("Slack alert failed:", e)
 
 def scan_repository():
     result = run_history_scan()
@@ -1166,7 +1186,7 @@ RepoGuardian Autonomous Security Engine
         ],
         check=True,
         cwd=REPO_ROOT
-    )
+     )
 
         add_activity(
             "Secure remediation branch pushed to GitHub",
@@ -1233,6 +1253,16 @@ RepoGuardian Autonomous Security Engine
             "success": False,
             "error": str(e)
         }
+    slack_message = (
+    "🚨 RepoGuardian Security Alert\n\n"
+    f"Repository: {repo_name}\n\n"
+    f"Risk: {req.risk}\n\n"
+    "AI remediation PR created:\n"
+    f"{pr.html_url}\n\n"
+    "Status: ACTIVE"
+      )
+
+    send_slack_alert(slack_message)
 @app.post("/api/merge-pr")
 def merge_pr(data: dict):
 
