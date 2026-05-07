@@ -30,6 +30,8 @@ import json
 from fastapi import Request
 import hmac
 import hashlib
+from agents.orchestrator_agent import orchestrator_agent
+from agents.memory_agent import memory_agent
 REPO_ROOT = Path(__file__).resolve().parent.parent
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 class PRRequest(BaseModel):
@@ -1437,15 +1439,27 @@ def export_report():
     )
 @app.post("/webhook/github")
 async def github_webhook(request: Request):
-    try:
-        raw_body = await request.body()
-        payload = json.loads(raw_body.decode("utf-8"))
 
-        event = request.headers.get("X-GitHub-Event")
+    try:
+
+        raw_body = await request.body()
+
+        payload = json.loads(
+            raw_body.decode("utf-8")
+        )
+
+        event = request.headers.get(
+            "X-GitHub-Event"
+        )
+
         print("GitHub Event:", event)
 
-        signature = request.headers.get("X-Hub-Signature-256")
+        signature = request.headers.get(
+            "X-Hub-Signature-256"
+        )
+
         secret = os.getenv("WEBHOOK_SECRET")
+
         expected_signature = (
             "sha256="
             + hmac.new(
@@ -1455,28 +1469,145 @@ async def github_webhook(request: Request):
             ).hexdigest()
         )
 
-        if not hmac.compare_digest(expected_signature, signature):
+        if not hmac.compare_digest(
+            expected_signature,
+            signature
+        ):
+
             return {
                 "success": False,
                 "message": "Invalid webhook signature"
             }
 
-        if event == "push":
-            print("Push received from:", payload["repository"]["full_name"])
-            add_activity("GitHub push event received", "info")
+        # ----------------------------------------
+        # PUSH EVENT
+        # ----------------------------------------
 
-            findings = scan_repository()
+        if event == "push":
+
+            repo_name = payload["repository"]["full_name"]
+
+            pusher = payload["pusher"]["name"]
+
+            branch = payload["ref"].split("/")[-1]
+
+            print(
+                f"Push received from: {repo_name}"
+            )
+
             add_activity(
-                f"{len(findings)} security findings detected",
+                (
+                    "[Orchestrator Agent] "
+                    f"GitHub push detected on "
+                    f"{branch} by {pusher}"
+                ),
+                "info"
+            )
+
+            # ------------------------------------
+            # RUN AGENT PIPELINE
+            # ------------------------------------
+
+            result = orchestrator_agent()
+
+            findings = result["findings"]
+
+            health_score = result["health_score"]
+
+            summary = result["summary"]
+
+            # ------------------------------------
+            # REPO HEALTH
+            # ------------------------------------
+
+            add_activity(
+                (
+                    "[Repo Health Agent] "
+                    f"Repository health score: "
+                    f"{health_score}/100"
+                ),
                 "warning"
             )
 
+            add_activity(
+                (
+                    "[Repo Health Agent] "
+                    f"Critical: {summary['critical']} | "
+                    f"High: {summary['high']} | "
+                    f"Medium: {summary['medium']} | "
+                    f"Low: {summary['low']}"
+                ),
+                "warning"
+            )
+
+            # ------------------------------------
+            # SECURITY FINDINGS
+            # ------------------------------------
+
+            for finding in findings:
+
+                add_activity(
+                    (
+                        f"[{finding['agent']}] "
+                        f"{finding['message']} "
+                        f"({finding['severity']})"
+                    ),
+                    "critical"
+                )
+
+                # ------------------------------
+                # MEMORY AGENT
+                # ------------------------------
+
+                memory_agent(
+                    pusher,
+                    finding["risk"]
+                )
+
+            # ------------------------------------
+            # SLACK ALERT
+            # ------------------------------------
+
+            send_slack_alert(
+                (
+                    "🚨 RepoGuardian Autonomous Alert\n\n"
+                    f"Repository: {repo_name}\n\n"
+                    f"Developer: {pusher}\n\n"
+                    f"Branch: {branch}\n\n"
+                    f"Security Findings: "
+                    f"{len(findings)}\n\n"
+                    f"Repo Health Score: "
+                    f"{health_score}/100"
+                )
+            )
+
+            print(
+                "[Orchestrator Agent] "
+                "Autonomous security workflow completed"
+            )
+
             return {
+
                 "success": True,
+
                 "event": "push",
-                "repo": payload["repository"]["full_name"],
+
+                "repository": repo_name,
+
+                "developer": pusher,
+
+                "branch": branch,
+
+                "health_score": health_score,
+
+                "summary": summary,
+
                 "findings": findings
             }
+
+        # ----------------------------------------
+        # DEFAULT RESPONSE
+        # ----------------------------------------
 
         return {
             "success": True,
@@ -1484,6 +1615,20 @@ async def github_webhook(request: Request):
         }
 
     except Exception as e:
+
+        print(
+            "[Orchestrator Agent] ERROR:",
+            str(e)
+        )
+
+        add_activity(
+            (
+                "[Security Agent] "
+                f"Webhook pipeline failed: {str(e)}"
+            ),
+            "critical"
+        )
+
         return {
             "success": False,
             "error": str(e)
