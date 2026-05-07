@@ -1075,7 +1075,9 @@ def executive_summary():
     }
 @app.post("/api/create-pr")
 def create_pr(req: PRRequest):
+
     print("REPO ROOT:", REPO_ROOT)
+
     try:
 
         token = os.getenv("GITHUB_TOKEN")
@@ -1094,13 +1096,6 @@ def create_pr(req: PRRequest):
             f"{req.risk.lower().replace(' ', '-')}-"
             f"{int(datetime.now().timestamp())}"
         )
-
-        # ----------------------------------------
-        # GIT SETUP
-        # ----------------------------------------
-
-
-       
 
         add_activity(
             f"AI remediation branch created: {branch_name}",
@@ -1141,6 +1136,8 @@ RepoGuardian Autonomous Security Engine
         with open(filename, "w", encoding="utf-8") as f:
             f.write(fix_content)
 
+        
+
         # ----------------------------------------
         # GIT ADD
         # ----------------------------------------
@@ -1177,16 +1174,16 @@ RepoGuardian Autonomous Security Engine
         # ----------------------------------------
 
         subprocess.run(
-        [
-            "git",
-            "push",
-            "-u",
-            "origin",
-            "HEAD:" + branch_name
-        ],
-        check=True,
-        cwd=REPO_ROOT
-     )
+            [
+                "git",
+                "push",
+                "-u",
+                "origin",
+                branch_name
+            ],
+            check=True,
+            cwd=REPO_ROOT
+        )
 
         add_activity(
             "Secure remediation branch pushed to GitHub",
@@ -1216,7 +1213,11 @@ RepoGuardian Autonomous Security Engine
             head=branch_name,
             base=repo.default_branch
         )
-        
+
+        # ----------------------------------------
+        # PR COMMENT
+        # ----------------------------------------
+
         comment_body = (
             "# RepoGuardian Autonomous Security Review\n\n"
             "## AI Security Remediation Complete\n\n"
@@ -1230,6 +1231,19 @@ RepoGuardian Autonomous Security Engine
         )
 
         pr.create_issue_comment(comment_body)
+
+        # ----------------------------------------
+        # SLACK ALERT
+        # ----------------------------------------
+
+        send_slack_alert(
+            "🚨 RepoGuardian Security Alert\n\n"
+            f"Repository: {repo_name}\n\n"
+            f"Risk: {req.risk}\n\n"
+            f"AI remediation PR created:\n{pr.html_url}\n\n"
+            "Status: ACTIVE"
+        )
+
         add_activity(
             f"Pull Request #{pr.number} opened successfully",
             "success"
@@ -1254,7 +1268,6 @@ RepoGuardian Autonomous Security Engine
             "success": False,
             "error": str(e)
         }
-    
 @app.post("/api/merge-pr")
 def merge_pr(data: dict):
 
