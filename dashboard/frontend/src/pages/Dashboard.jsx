@@ -397,14 +397,22 @@ export default function Dashboard() {
           flexWrap: "wrap"
         }}>
 
-          <button
-            style={S.btn(true)}
-            onClick={() =>
-              window.open("http://localhost:8000/api/export-report")
-            }
-          >
-            📋 Export Security Report
-          </button>
+         <button
+  style={S.btn(true)}
+  onClick={(e) => {
+    e.preventDefault();
+
+    const link = document.createElement("a");
+    link.href = "http://localhost:8000/api/export-report";
+    link.setAttribute("download", "RepoGuardian_Report.json");
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }}
+>
+  📋 Export Security Report
+</button>
 
           <button
             style={S.btn()}

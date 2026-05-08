@@ -73,12 +73,19 @@ export default function PRCard({ pr }) {
             🔧 View Auto-Fix PR
           </a>
         )}
-        <button
-          onClick={handleDownloadReport}
-          className="text-teal-400 hover:underline"
-        >
-          📄 Download Report
-        </button>
+        <a
+  href="http://localhost:8000/api/export-report"
+  download="RepoGuardian_Report.json"
+  target="_blank"
+  rel="noreferrer"
+  style={{
+    color: "#5eead4",
+    textDecoration: "none",
+    fontWeight: "500",
+  }}
+>
+  📄 Download Report
+</a>
       </div>
 
     </div>
