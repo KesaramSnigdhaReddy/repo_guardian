@@ -137,7 +137,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div style={{
-        color: "#8b949e",
+        color: "#5d2471",
         padding: "40px",
         fontSize: "14px"
       }}>
@@ -161,7 +161,7 @@ export default function Dashboard() {
   if (!data) {
     return (
       <div style={{
-        color: "#8b949e",
+        color: "#6a5e74",
         padding: "40px"
       }}>
         No dashboard data returned.
@@ -172,15 +172,15 @@ export default function Dashboard() {
   const S = {
 
     section: {
-      background: "#161b22",
-      border: "1px solid #21262d",
+      background: "#1b1820",
+      border: "1px solid #1f1c24",
       borderRadius: "10px",
       overflow: "hidden",
     },
 
     sectionHeader: {
       padding: "14px 20px",
-      borderBottom: "1px solid #21262d",
+      borderBottom: "1px solid #1f1c27",
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
@@ -222,8 +222,8 @@ export default function Dashboard() {
           position: "fixed",
           top: "20px",
           right: "20px",
-          background: "#161b22",
-          border: "1px solid #30363d",
+          background: "#222027",
+          border: "1px solid #252329de",
           color: "white",
           padding: "12px 16px",
           borderRadius: "10px",
@@ -397,19 +397,11 @@ export default function Dashboard() {
           flexWrap: "wrap"
         }}>
 
-         <button
+       <button
   style={S.btn(true)}
-  onClick={(e) => {
-    e.preventDefault();
-
-    const link = document.createElement("a");
-    link.href = "http://localhost:8000/api/export-report";
-    link.setAttribute("download", "RepoGuardian_Report.json");
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }}
+  onClick={() =>
+    window.open("http://localhost:8000/api/export-report")
+  }
 >
   📋 Export Security Report
 </button>
@@ -460,8 +452,8 @@ export default function Dashboard() {
             <div
               key={idx}
               style={{
-                background: "#0d1117",
-                border: "1px solid #21262d",
+                background: "#270431",
+                border: "1px solid #25124b",
                 padding: "14px",
                 borderRadius: "10px",
                 color: "#c9d1d9",

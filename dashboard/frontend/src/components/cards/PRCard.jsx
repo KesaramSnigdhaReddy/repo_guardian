@@ -7,9 +7,8 @@ export default function PRCard({ pr }) {
       : "text-red-400";
 
   const handleDownloadReport = async () => {
-    const { getReport } = await import("../../api/client");
-    const url = getReport(pr.id);
-    window.open(url, "_blank");
+  
+    window.open("http://localhost:8000/api/export-report")
   };
 
   return (

@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 a:hover {
-  background: rgba(177,186,196,0.08) !important;
+  background: rgba(170, 115, 194, 0.08) !important;
 }
 
 * {
@@ -13,7 +13,7 @@ a:hover {
 body {
   margin: 0;
   padding: 0;
-  background: #0d1117;
+  background: #2a262b;
   color: #e6edf3;
 }
 
@@ -22,14 +22,14 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0d1117;
+  background: #242224;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #30363d;
+  background: #272428;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #484f58;
+  background: #252327;
 }
