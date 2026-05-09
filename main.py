@@ -1862,6 +1862,60 @@ async def github_webhook(request: Request):
 def get_agent_status():
 
     return agent_status
+@app.get("/api/developers")
+def get_developers():
+
+    return [
+
+        {
+            "name": "muski630346",
+            "prs": 14,
+            "health": 92,
+            "risk": "medium",
+            "top_issue": "hardcoded secrets",
+            "repeated": 12,
+            "trend": "improving",
+            "scores": "62 → 70 → 81 → 84",
+            "trust": 87
+        },
+
+        {
+            "name": "AkshithaSaada",
+            "prs": 6,
+            "health": 90,
+            "risk": "low",
+            "top_issue": "dependency warnings",
+            "repeated": 3,
+            "trend": "stable",
+            "scores": "74 → 79 → 82 → 90",
+            "trust": 93
+        },
+
+        {
+            "name": "KesaramSnigdhaReddy",
+            "prs": 7,
+            "health": 88,
+            "risk": "low",
+            "top_issue": "unsafe API exposure",
+            "repeated": 4,
+            "trend": "improving",
+            "scores": "68 → 74 → 81 → 88",
+            "trust": 90
+        },
+
+        {
+            "name": "codewithVamshi5",
+            "prs": 11,
+            "health": 89,
+            "risk": "low",
+            "top_issue": "dependency vulnerabilities",
+            "repeated": 5,
+            "trend": "improving",
+            "scores": "61 → 68 → 79 → 89",
+            "trust": 91
+        }
+
+    ]
 # ─────────────────────────────────────────
 # Run
 # ─────────────────────────────────────────

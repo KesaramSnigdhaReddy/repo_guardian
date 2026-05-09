@@ -1,10 +1,39 @@
 import { useState } from "react";
 
 const SEVERITY_CONFIG = {
-  critical: { color: "#da3633", bg: "#da363318", label: "Critical" },
-  high: { color: "#e3b341", bg: "#e3b34118", label: "High" },
-  medium: { color: "#d29922", bg: "#d2992218", label: "Medium" },
-  low: { color: "#2ea043", bg: "#2ea04318", label: "Low" },
+
+  critical: {
+    color: "#ff5a1f",
+    bg: "rgba(255,90,31,0.10)",
+    border: "rgba(255,90,31,0.28)",
+    glow: "0 0 12px rgba(255,90,31,0.35)",
+    label: "Critical",
+  },
+
+  high: {
+    color: "#ff8c42",
+    bg: "rgba(255,140,66,0.10)",
+    border: "rgba(255,140,66,0.24)",
+    glow: "0 0 10px rgba(255,140,66,0.30)",
+    label: "High",
+  },
+
+  medium: {
+    color: "#ffb347",
+    bg: "rgba(255,179,71,0.10)",
+    border: "rgba(255,179,71,0.24)",
+    glow: "0 0 8px rgba(255,179,71,0.25)",
+    label: "Medium",
+  },
+
+  low: {
+    color: "#ffcf85",
+    bg: "rgba(255,207,133,0.10)",
+    border: "rgba(255,207,133,0.24)",
+    glow: "0 0 6px rgba(255,207,133,0.20)",
+    label: "Low",
+  },
+
 };
 
 // 🔥 Business-readable affected area
@@ -67,17 +96,21 @@ export default function FindingsTable({ findings = [] }) {
 
   // 🔥 Attack Simulation
   const handleSimulate = async (finding) => {
+
     try {
 
-      const res = await fetch("http://localhost:8000/api/simulate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          type: finding.file || "generic"
-        })
-      });
+      const res = await fetch(
+        "http://localhost:8000/api/simulate",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            type: finding.file || "generic"
+          })
+        }
+      );
 
       const data = await res.json();
 
@@ -95,15 +128,18 @@ export default function FindingsTable({ findings = [] }) {
 
     try {
 
-      const res = await fetch("http://localhost:8000/api/autofix", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          type: finding.file || "generic"
-        })
-      });
+      const res = await fetch(
+        "http://localhost:8000/api/autofix",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            type: finding.file || "generic"
+          })
+        }
+      );
 
       const data = await res.json();
 
@@ -119,151 +155,300 @@ export default function FindingsTable({ findings = [] }) {
   // 🔥 Empty state
   if (findings.length === 0) {
     return (
-      <div style={{
-        padding: "32px",
-        textAlign: "center",
-        color: "#484f58"
-      }}>
-        No risks detected
+      <div
+        style={{
+          padding: "36px",
+          textAlign: "center",
+          color: "#ffb066",
+          background:
+            "linear-gradient(145deg,#080808,#101010)",
+          borderRadius: "18px",
+          border:
+            "1px solid rgba(255,120,40,0.12)",
+        }}
+      >
+        No active threats detected
       </div>
     );
   }
 
   return (
+
     <div>
 
       {/* 🔥 Risk Banner */}
-      <div style={{
-        marginBottom: "12px",
-        color: "#da3633",
-        fontSize: "13px",
-        fontWeight: 500
-      }}>
-        ⚠️ {findings.length} active risks detected in your repository
+
+      <div
+        style={{
+          marginBottom: "18px",
+
+          background:
+            "linear-gradient(145deg,#120707,#1a0d08)",
+
+          border:
+            "1px solid rgba(255,90,31,0.22)",
+
+          borderRadius: "14px",
+
+          padding: "14px 18px",
+
+          color: "#ff8c42",
+
+          fontSize: "13px",
+
+          fontWeight: "700",
+
+          letterSpacing: "0.04em",
+
+          boxShadow:
+            "0 0 20px rgba(255,90,31,0.08)",
+        }}
+      >
+        ⚠️ ACTIVE THREAT INTELLIGENCE • {findings.length} RISKS DETECTED
       </div>
 
       {/* 🔥 Table */}
-      <div style={{ overflowX: "auto" }}>
-        <table style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          fontSize: "13px"
-        }}>
+
+      <div
+        style={{
+          overflowX: "auto",
+
+          background:
+            "linear-gradient(145deg,#070707,#101010)",
+
+          border:
+            "1px solid rgba(255,120,40,0.12)",
+
+          borderRadius: "18px",
+
+          boxShadow:
+            "0 0 24px rgba(0,0,0,0.45)",
+        }}
+      >
+
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            fontSize: "13px"
+          }}
+        >
 
           <thead>
-            <tr style={{ borderBottom: "1px solid #21262d" }}>
-              {["Severity", "Risk Type", "Affected Area", "Description", "Action"].map(h => (
+
+            <tr
+              style={{
+                borderBottom:
+                  "1px solid rgba(255,120,40,0.14)",
+
+                background:
+                  "linear-gradient(90deg, rgba(255,120,40,0.06), transparent)",
+              }}
+            >
+
+              {[
+                "Severity",
+                "Risk Type",
+                "Affected Area",
+                "Description",
+                "Action"
+              ].map(h => (
+
                 <th
                   key={h}
                   style={{
                     textAlign: "left",
-                    padding: "8px 16px",
-                    color: "#8b949e",
+
+                    padding: "14px 18px",
+
+                    color: "#ffb066",
+
                     fontSize: "11px",
-                    fontWeight: 600,
+
+                    fontWeight: 700,
+
                     textTransform: "uppercase",
+
+                    letterSpacing: "0.08em",
                   }}
                 >
                   {h}
                 </th>
               ))}
+
             </tr>
+
           </thead>
 
           <tbody>
+
             {findings.map((f, i) => {
 
-              const cfg = SEVERITY_CONFIG[f.severity] || {
-                color: "#8b949e",
-                bg: "#8b949e18",
-                label: f.severity
-              };
+              const cfg =
+                SEVERITY_CONFIG[f.severity] || {
+
+                  color: "#ffb066",
+
+                  bg: "rgba(255,120,40,0.08)",
+
+                  border: "rgba(255,120,40,0.18)",
+
+                  glow: "none",
+
+                  label: f.severity
+                };
 
               return (
+
                 <tr
                   key={i}
                   style={{
-                    borderBottom: "1px solid #161b22"
+                    borderBottom:
+                      "1px solid rgba(255,120,40,0.08)"
                   }}
                 >
 
                   {/* Severity */}
-                  <td style={{ padding: "10px 16px" }}>
-                    <span style={{
-                      background: cfg.bg,
-                      color: cfg.color,
-                      padding: "3px 10px",
-                      borderRadius: "12px",
-                      fontSize: "11px",
-                      fontWeight: 600
-                    }}>
+
+                  <td style={{ padding: "14px 18px" }}>
+
+                    <span
+                      style={{
+                        background: cfg.bg,
+
+                        color: cfg.color,
+
+                        padding: "6px 12px",
+
+                        borderRadius: "999px",
+
+                        fontSize: "11px",
+
+                        fontWeight: "700",
+
+                        border:
+                          `1px solid ${cfg.border}`,
+
+                        boxShadow: cfg.glow,
+
+                        letterSpacing: "0.04em",
+                      }}
+                    >
                       {cfg.label}
+
                       {cfg.label === "Critical" && " 🔥"}
                       {cfg.label === "High" && " ⚠️"}
+
                     </span>
+
                   </td>
 
                   {/* Risk Type */}
-                  <td style={{
-                    padding: "10px 16px",
-                    color: "#58a6ff"
-                  }}>
+
+                  <td
+                    style={{
+                      padding: "14px 18px",
+                      color: "#ff9d2e",
+                      fontWeight: "600",
+                    }}
+                  >
                     {getRiskType(f.file)}
                   </td>
 
                   {/* Area */}
-                  <td style={{
-                    padding: "10px 16px",
-                    color: "#8b949e"
-                  }}>
+
+                  <td
+                    style={{
+                      padding: "14px 18px",
+                      color: "#9ca3af"
+                    }}
+                  >
                     {getArea(f.file)}
                   </td>
 
                   {/* Description */}
-                  <td style={{
-                    padding: "10px 16px",
-                    color: "#e6edf3",
-                    maxWidth: "350px",
-                    lineHeight: "1.5"
-                  }}>
+
+                  <td
+                    style={{
+                      padding: "14px 18px",
+
+                      color: "#f3f4f6",
+
+                      maxWidth: "350px",
+
+                      lineHeight: "1.7",
+                    }}
+                  >
                     {getDescription(f.message, f.file)}
                   </td>
 
                   {/* Actions */}
-                  <td style={{
-                    padding: "10px 16px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "6px"
-                  }}>
+
+                  <td
+                    style={{
+                      padding: "14px 18px",
+
+                      display: "flex",
+
+                      flexDirection: "column",
+
+                      gap: "8px"
+                    }}
+                  >
 
                     {/* Simulate */}
+
                     <button
                       onClick={() => handleSimulate(f)}
                       style={{
-                        background: "#cf222e",
+                        background:
+                          "linear-gradient(135deg,#ff5a1f,#ff8c42)",
+
                         color: "white",
+
                         border: "none",
-                        padding: "5px 10px",
-                        borderRadius: "6px",
+
+                        padding: "8px 12px",
+
+                        borderRadius: "10px",
+
                         cursor: "pointer",
-                        fontSize: "11px"
+
+                        fontSize: "11px",
+
+                        fontWeight: "700",
+
+                        boxShadow:
+                          "0 0 14px rgba(255,90,31,0.25)",
                       }}
                     >
                       🚨 Simulate Attack
                     </button>
 
                     {/* Auto Fix */}
+
                     <button
                       onClick={() => handleAutoFix(f)}
                       style={{
-                        background: "#1f6feb",
-                        color: "white",
+                        background:
+                          "linear-gradient(135deg,#ff9d2e,#ffb347)",
+
+                        color: "#111",
+
                         border: "none",
-                        padding: "5px 10px",
-                        borderRadius: "6px",
+
+                        padding: "8px 12px",
+
+                        borderRadius: "10px",
+
                         cursor: "pointer",
-                        fontSize: "11px"
+
+                        fontSize: "11px",
+
+                        fontWeight: "700",
+
+                        boxShadow:
+                          "0 0 14px rgba(255,179,71,0.22)",
                       }}
                     >
                       🛠️ Auto Fix
@@ -274,174 +459,12 @@ export default function FindingsTable({ findings = [] }) {
                 </tr>
               );
             })}
+
           </tbody>
+
         </table>
+
       </div>
-
-      {/* 🔥 Simulation Modal */}
-      {simulation && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          background: "rgba(0,0,0,0.7)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1000
-        }}>
-
-          <div style={{
-            background: "#0d1117",
-            padding: "24px",
-            borderRadius: "12px",
-            width: "430px",
-            border: "1px solid #30363d",
-            boxShadow: "0 0 40px rgba(0,0,0,0.6)"
-          }}>
-
-            <h2 style={{
-              color: "#da3633",
-              marginBottom: "12px"
-            }}>
-              🚨 {simulation.title}
-            </h2>
-
-            <p style={{ color: "#e6edf3" }}>
-              <strong>Risk:</strong> {simulation.risk}
-            </p>
-
-            <p style={{
-              color: "#e6edf3",
-              marginTop: "8px"
-            }}>
-              <strong>Estimated Business Impact:</strong> {simulation.cost}
-            </p>
-
-            <div style={{ marginTop: "14px" }}>
-              <strong style={{ color: "#e6edf3" }}>
-                Attack Consequences:
-              </strong>
-
-              <ul style={{
-                marginTop: "8px",
-                paddingLeft: "20px",
-                color: "#8b949e",
-                lineHeight: "1.7"
-              }}>
-                {simulation.impact.map((item, idx) => (
-                  <li key={idx}>{item}</li>
-                ))}
-              </ul>
-            </div>
-
-            <p style={{
-              marginTop: "12px",
-              color: "#8b949e",
-              fontSize: "12px"
-            }}>
-              ⚡ Threat detected in {simulation.detected_in}
-            </p>
-
-            <button
-              onClick={() => setSimulation(null)}
-              style={{
-                marginTop: "16px",
-                background: "#238636",
-                color: "white",
-                border: "none",
-                padding: "6px 14px",
-                borderRadius: "6px",
-                cursor: "pointer"
-              }}
-            >
-              Close
-            </button>
-
-          </div>
-        </div>
-      )}
-
-      {/* 🔥 AUTOFIX MODAL */}
-      {fixData && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          background: "rgba(0,0,0,0.7)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1000
-        }}>
-
-          <div style={{
-            background: "#0d1117",
-            padding: "24px",
-            borderRadius: "12px",
-            width: "460px",
-            border: "1px solid #30363d"
-          }}>
-
-            <h2 style={{
-              color: "#1f6feb",
-              marginBottom: "14px"
-            }}>
-              🛠️ AI Remediation Plan
-            </h2>
-
-            <div style={{
-              color: "#8b949e",
-              marginBottom: "12px",
-              lineHeight: "1.6"
-            }}>
-              RepoGuardian generated an automated remediation workflow.
-            </div>
-
-            <ul style={{
-              color: "#c9d1d9",
-              paddingLeft: "20px",
-              lineHeight: "1.8"
-            }}>
-              {fixData.fix.map((f, idx) => (
-                <li key={idx}>{f}</li>
-              ))}
-            </ul>
-
-            <div style={{
-              marginTop: "16px",
-              background: "#161b22",
-              border: "1px solid #30363d",
-              padding: "12px",
-              borderRadius: "8px",
-              color: "#2ea043",
-              fontSize: "13px"
-            }}>
-              ✅ Estimated remediation success rate: 91%
-            </div>
-
-            <button
-              onClick={() => setFixData(null)}
-              style={{
-                marginTop: "16px",
-                background: "#238636",
-                color: "white",
-                border: "none",
-                padding: "6px 14px",
-                borderRadius: "6px",
-                cursor: "pointer"
-              }}
-            >
-              Close
-            </button>
-
-          </div>
-        </div>
-      )}
 
     </div>
   );
