@@ -2,34 +2,150 @@
 @tailwind components;
 @tailwind utilities;
 
-a:hover {
-  background: rgba(177,186,196,0.08) !important;
-}
+/* Global */
 
 * {
   box-sizing: border-box;
 }
 
+/* Body */
+
 body {
   margin: 0;
   padding: 0;
-  background: #0d1117;
+
+  background:
+    radial-gradient(circle at top,
+      rgba(255,120,40,0.08) 0%,
+      #090909 28%,
+      #050505 100%);
+
   color: #e6edf3;
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Helvetica,
+    Arial,
+    sans-serif;
+
+  overflow-x: hidden;
 }
 
+/* Smooth */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Links */
+
+a {
+  transition: all 0.25s ease;
+}
+
+a:hover {
+  background:
+    rgba(255,140,66,0.10) !important;
+
+  box-shadow:
+    0 0 14px rgba(255,140,66,0.12);
+
+  color: #ffffff !important;
+}
+
+/* Selection */
+
+::selection {
+  background: rgba(255,140,66,0.28);
+  color: white;
+}
+
+/* Scrollbar */
+
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0d1117;
+  background: #070707;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #30363d;
-  border-radius: 4px;
+  background:
+    linear-gradient(
+      180deg,
+      #ff7a00,
+      #ffb347
+    );
+
+  border-radius: 999px;
+
+  box-shadow:
+    0 0 12px rgba(255,140,66,0.22);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #484f58;
+  background:
+    linear-gradient(
+      180deg,
+      #ff9d2e,
+      #ffd27a
+    );
+}
+
+/* Inputs */
+
+input,
+textarea,
+button {
+  font-family: inherit;
+}
+
+/* Glow Utility */
+
+.orange-glow {
+  box-shadow:
+    0 0 18px rgba(255,140,66,0.22);
+}
+
+/* Glass Utility */
+
+.cyber-panel {
+  background:
+    linear-gradient(145deg,#080808,#151515);
+
+  border:
+    1px solid rgba(255,140,66,0.12);
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 0 28px rgba(0,0,0,0.45);
+}
+
+/* Animated Pulse */
+
+@keyframes neonPulse {
+
+  0% {
+    box-shadow:
+      0 0 10px rgba(255,140,66,0.18);
+  }
+
+  50% {
+    box-shadow:
+      0 0 24px rgba(255,140,66,0.35);
+  }
+
+  100% {
+    box-shadow:
+      0 0 10px rgba(255,140,66,0.18);
+  }
+}
+
+.neon-pulse {
+  animation:
+    neonPulse 2.5s infinite ease-in-out;
 }

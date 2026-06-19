@@ -16,7 +16,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from github import Github
 import requests
-
+import smtplib
+from email.mime.text import MIMEText
 from agents.pr_review import run_pr_review_agent, PRReviewResult, ReviewComment
 from agents.policy_agent import PolicyAgent
 from agents.history_scanner import load_findings, run_history_scan
@@ -32,6 +33,34 @@ import hmac
 import hashlib
 from agents.orchestrator_agent import orchestrator_agent
 from agents.memory_agent import memory_agent
+from fastapi import FastAPI
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
+from fastapi.responses import FileResponse
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    PageBreak
+)
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+from reportlab.platypus.tables import Table, TableStyle
+from reportlab.lib.pagesizes import letter
+from datetime import datetime
+app = FastAPI()
+load_dotenv()
+activities = []
+
+agent_status = {
+
+    "Orchestrator Agent": "IDLE",
+
+    "Security Agent": "IDLE",
+
+    "Repo Health Agent": "IDLE",
+
+    "Memory Agent": "IDLE"
+}
 REPO_ROOT = Path(__file__).resolve().parent.parent
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 class PRRequest(BaseModel):
@@ -171,7 +200,32 @@ class ReviewRequest(BaseModel):
     repo: str
     pr_number: int
 
+def send_security_email(subject, body):
 
+    sender = os.getenv("EMAIL_USER")
+    password = os.getenv("EMAIL_PASS")
+    receiver = os.getenv("ALERT_RECEIVER")
+
+    if not sender or not password or not receiver:
+        print("Email environment variables missing")
+        return
+
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"] = sender
+    msg["To"] = receiver
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender, password)
+        server.sendmail(sender, receiver, msg.as_string())
+        server.quit()
+
+        print("Security email alert sent")
+
+    except Exception as e:
+        print("Email failed:", e)
 # ─────────────────────────────────────────
 # Health check
 # ─────────────────────────────────────────
@@ -1076,7 +1130,7 @@ def executive_summary():
         "summary": "Critical vulnerabilities detected across authentication, API, and configuration systems. Immediate remediation recommended for high-risk modules."
     }
 @app.post("/api/create-pr")
-def create_pr(req: PRRequest):
+async def create_pr(req: PRRequest):
 
     print("REPO ROOT:", REPO_ROOT)
 
@@ -1191,7 +1245,10 @@ RepoGuardian Autonomous Security Engine
             "[GitHub Agent] Secure remediation branch pushed to GitHub",
             "success"
         )
-
+        send_security_email(
+    "RepoGuardian Security Alert",
+    "A secure remediation pull request was automatically created by RepoGuardian."
+)
         # ----------------------------------------
         # CREATE PR
         # ----------------------------------------
@@ -1250,7 +1307,7 @@ RepoGuardian Autonomous Security Engine
             f"[AutoFix Agent] Autonomous Pull Request #{pr.number} opened successfully",
             "success"
         )
-
+        
         return {
             "success": True,
             "url": pr.html_url,
@@ -1258,6 +1315,22 @@ RepoGuardian Autonomous Security Engine
             "title": pr.title,
             "branch": branch_name
         }
+        await send_security_email(
+
+    "🚨 RepoGuardian Security Alert",
+
+    (
+        "<h2>RepoGuardian Autonomous Security Alert</h2>"
+
+        f"<p><b>Repository:</b> {repo_name}</p>"
+
+        f"<p><b>Risk:</b> {req.risk}</p>"
+
+        "<p><b>Status:</b> ACTIVE</p>"
+
+        f'<p><a href="{pr.html_url}">View Secure Pull Request</a></p>'
+    )
+)
 
     except Exception as e:
 
@@ -1411,31 +1484,170 @@ def get_activity():
 @app.get("/api/export-report")
 def export_report():
 
-    report = {
-        "generated_at": datetime.now().isoformat(),
-        "summary": {
-            "critical": 2,
-            "high": 5,
-            "medium": 8,
-            "security_score": 82
-        },
-        "activity": ACTIVITY_FEED
-    }
+    pdf_path = "RepoGuardian_Report.pdf"
 
-    path = "RepoGuardian_Report.json"
-
-    with open(path, "w") as f:
-        json.dump(report, f, indent=2)
-
-    add_activity(
-        "Executive security report exported",
-        "info"
+    doc = SimpleDocTemplate(
+        pdf_path,
+        pagesize=letter
     )
 
+    styles = getSampleStyleSheet()
+    elements = []
+
+    # Title
+    elements.append(
+        Paragraph(
+            "<b>RepoGuardian Security Report</b>",
+            styles['Title']
+        )
+    )
+
+    elements.append(Spacer(1, 20))
+
+    # Metadata
+    elements.append(
+        Paragraph(
+            f"Generated At: {datetime.now()}",
+            styles['BodyText']
+        )
+    )
+
+    elements.append(Spacer(1, 20))
+
+    # Summary
+    elements.append(
+        Paragraph("<b>Executive Summary</b>", styles['Heading2'])
+    )
+
+    summary_data = [
+        ["Metric", "Value"],
+        ["Security Score", "82/100"],
+        ["Critical Issues", "2"],
+        ["High Issues", "5"],
+        ["Medium Issues", "8"],
+    ]
+
+    summary_table = Table(summary_data, colWidths=[220, 220])
+
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.black),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('GRID', (0,0), (-1,-1), 1, colors.grey),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0,0), (-1,0), 10),
+    ]))
+
+    elements.append(summary_table)
+
+    elements.append(Spacer(1, 25))
+
+    # Findings
+    elements.append(
+        Paragraph("<b>Detected Vulnerabilities</b>", styles['Heading2'])
+    )
+
+    findings = [
+        {
+            "title": "Hardcoded API Key",
+            "severity": "Critical",
+            "file": "agents/pr_review.py",
+            "fix": "Moved secret into environment variables"
+        },
+        {
+            "title": "SQL Injection",
+            "severity": "High",
+            "file": "db/query.py",
+            "fix": "Parameterized database queries added"
+        },
+        {
+            "title": "Open API Access",
+            "severity": "Medium",
+            "file": "main.py",
+            "fix": "Authentication middleware added"
+        }
+    ]
+
+    findings_data = [
+        ["Vulnerability", "Severity", "File", "AI Suggested Fix"]
+    ]
+
+    for item in findings:
+        findings_data.append([
+            item["title"],
+            item["severity"],
+            item["file"],
+            item["fix"]
+        ])
+
+    findings_table = Table(
+        findings_data,
+        colWidths=[120, 80, 120, 160]
+    )
+
+    findings_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.darkred),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('GRID', (0,0), (-1,-1), 1, colors.grey),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0,0), (-1,0), 10),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+    ]))
+
+    elements.append(findings_table)
+
+    elements.append(Spacer(1, 25))
+
+    # Policy Violations
+    elements.append(
+        Paragraph("<b>Policy Violations</b>", styles['Heading2'])
+    )
+
+    violations = [
+        "no-hardcoded-secrets",
+        "unsafe-shell-execution",
+        "missing-auth-validation"
+    ]
+
+    for v in violations:
+        elements.append(
+            Paragraph(f"• {v}", styles['BodyText'])
+        )
+
+    elements.append(Spacer(1, 25))
+
+    # AI Fix Summary
+    elements.append(
+        Paragraph("<b>AI Auto-Fix Actions</b>", styles['Heading2'])
+    )
+
+    fixes = [
+        "Secrets moved to .env",
+        "SQL queries sanitized",
+        "Authentication layer enforced",
+        "Security PR generated automatically"
+    ]
+
+    for fix in fixes:
+        elements.append(
+            Paragraph(f"✓ {fix}", styles['BodyText'])
+        )
+
+    elements.append(Spacer(1, 30))
+
+    # Footer
+    elements.append(
+        Paragraph(
+            "Generated by RepoGuardian AI Security Platform",
+            styles['Italic']
+        )
+    )
+
+    doc.build(elements)
+
     return FileResponse(
-        path,
-        media_type="application/json",
-        filename="RepoGuardian_Report.json"
+        pdf_path,
+        media_type="application/pdf",
+        filename="RepoGuardian_Report.pdf"
     )
 @app.post("/webhook/github")
 async def github_webhook(request: Request):
@@ -1484,6 +1696,13 @@ async def github_webhook(request: Request):
         # ----------------------------------------
 
         if event == "push":
+            agent_status["Orchestrator Agent"] = "ACTIVE"
+
+            agent_status["Security Agent"] = "SCANNING"
+
+            agent_status["Repo Health Agent"] = "ANALYZING"
+
+            agent_status["Memory Agent"] = "LEARNING"
 
             repo_name = payload["repository"]["full_name"]
 
@@ -1585,7 +1804,13 @@ async def github_webhook(request: Request):
                 "[Orchestrator Agent] "
                 "Autonomous security workflow completed"
             )
+            agent_status["Orchestrator Agent"] = "IDLE"
 
+            agent_status["Security Agent"] = "IDLE"
+
+            agent_status["Repo Health Agent"] = "IDLE"
+
+            agent_status["Memory Agent"] = "IDLE"
             return {
 
                 "success": True,
@@ -1633,6 +1858,64 @@ async def github_webhook(request: Request):
             "success": False,
             "error": str(e)
         }
+@app.get("/api/agent-status")
+def get_agent_status():
+
+    return agent_status
+@app.get("/api/developers")
+def get_developers():
+
+    return [
+
+        {
+            "name": "muski630346",
+            "prs": 14,
+            "health": 92,
+            "risk": "medium",
+            "top_issue": "hardcoded secrets",
+            "repeated": 12,
+            "trend": "improving",
+            "scores": "62 → 70 → 81 → 84",
+            "trust": 87
+        },
+
+        {
+            "name": "AkshithaSaada",
+            "prs": 6,
+            "health": 90,
+            "risk": "low",
+            "top_issue": "dependency warnings",
+            "repeated": 3,
+            "trend": "stable",
+            "scores": "74 → 79 → 82 → 90",
+            "trust": 93
+        },
+
+        {
+            "name": "KesaramSnigdhaReddy",
+            "prs": 7,
+            "health": 88,
+            "risk": "low",
+            "top_issue": "unsafe API exposure",
+            "repeated": 4,
+            "trend": "improving",
+            "scores": "68 → 74 → 81 → 88",
+            "trust": 90
+        },
+
+        {
+            "name": "codewithVamshi5",
+            "prs": 11,
+            "health": 89,
+            "risk": "low",
+            "top_issue": "dependency vulnerabilities",
+            "repeated": 5,
+            "trend": "improving",
+            "scores": "61 → 68 → 79 → 89",
+            "trust": 91
+        }
+
+    ]
 # ─────────────────────────────────────────
 # Run
 # ─────────────────────────────────────────

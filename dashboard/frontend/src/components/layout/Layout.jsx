@@ -1,5 +1,4 @@
 import Topbar from "./Topbar";
-
 export default function Layout({ children }) {
   return (
     <div style={{
@@ -10,6 +9,7 @@ export default function Layout({ children }) {
       fontSize: "14px",
     }}>
       <Topbar />
+      
       <main style={{
         maxWidth: "1280px",
         margin: "0 auto",

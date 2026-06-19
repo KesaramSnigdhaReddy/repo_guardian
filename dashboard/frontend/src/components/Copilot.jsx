@@ -108,6 +108,7 @@ Recommended next steps:
     <>
 
       {/* Animation */}
+
       <style>
         {`
         @keyframes slideUp {
@@ -124,84 +125,142 @@ Recommended next steps:
       </style>
 
       {/* Floating AI Button */}
+
       <button
         onClick={() => setOpen(!open)}
         style={{
           position: "fixed",
+
           bottom: "18px",
           right: "18px",
-          width: "54px",
-          height: "54px",
+
+          width: "58px",
+          height: "58px",
+
           borderRadius: "50%",
-          border: "1px solid #30363d",
-          background: "#161b22",
-          color: "#58a6ff",
-          fontSize: "22px",
+
+          border:
+            "1px solid rgba(255,140,66,0.28)",
+
+          background:
+            "linear-gradient(145deg,#0a0a0a,#181818)",
+
+          color: "#ff9d2e",
+
+          fontSize: "24px",
+
           cursor: "pointer",
+
           zIndex: 1000,
-          boxShadow: "0 0 20px rgba(0,0,0,0.45)"
+
+          boxShadow:
+            "0 0 24px rgba(255,140,66,0.18)",
+
+          transition: "0.3s ease",
         }}
       >
         🤖
       </button>
 
       {/* AI Panel */}
+
       {open && (
 
-        <div style={{
-          position: "fixed",
-          bottom: "82px",
-          right: "18px",
-          width: "320px",
-          height: "430px",
-          background: "#0d1117ee",
-          border: "1px solid #30363d",
-          borderRadius: "16px",
-          overflow: "hidden",
-          zIndex: 1000,
-          boxShadow: "0 0 40px rgba(0,0,0,0.5)",
-          display: "flex",
-          flexDirection: "column",
-          animation: "slideUp 0.2s ease-out",
-          backdropFilter: "blur(10px)"
-        }}>
+        <div
+          style={{
+            position: "fixed",
+
+            bottom: "86px",
+            right: "18px",
+
+            width: "340px",
+            height: "460px",
+
+            background:
+              "linear-gradient(145deg,#050505ee,#121212ee)",
+
+            border:
+              "1px solid rgba(255,140,66,0.18)",
+
+            borderRadius: "20px",
+
+            overflow: "hidden",
+
+            zIndex: 1000,
+
+            boxShadow:
+              "0 0 40px rgba(0,0,0,0.65)",
+
+            display: "flex",
+
+            flexDirection: "column",
+
+            animation: "slideUp 0.2s ease-out",
+
+            backdropFilter: "blur(14px)",
+          }}
+        >
 
           {/* Header */}
-          <div style={{
-            padding: "12px 14px",
-            borderBottom: "1px solid #21262d",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            background: "#111827"
-          }}>
+
+          <div
+            style={{
+              padding: "14px 16px",
+
+              borderBottom:
+                "1px solid rgba(255,140,66,0.12)",
+
+              display: "flex",
+
+              alignItems: "center",
+
+              justifyContent: "space-between",
+
+              background:
+                "linear-gradient(90deg, rgba(255,140,66,0.08), transparent)",
+            }}
+          >
 
             <div>
-              <div style={{
-                color: "#58a6ff",
-                fontWeight: 700,
-                fontSize: "14px"
-              }}>
+
+              <div
+                style={{
+                  color: "#ff9d2e",
+
+                  fontWeight: 700,
+
+                  fontSize: "14px",
+                }}
+              >
                 🤖 RepoGuardian AI
               </div>
 
-              <div style={{
-                color: "#8b949e",
-                fontSize: "10px",
-                marginTop: "2px"
-              }}>
+              <div
+                style={{
+                  color: "#8b949e",
+
+                  fontSize: "10px",
+
+                  marginTop: "2px",
+                }}
+              >
                 enterprise security copilot
               </div>
+
             </div>
 
             <button
               onClick={() => setOpen(false)}
               style={{
                 background: "transparent",
+
                 border: "none",
+
                 color: "#8b949e",
+
                 cursor: "pointer",
-                fontSize: "16px"
+
+                fontSize: "16px",
               }}
             >
               ✕
@@ -210,21 +269,45 @@ Recommended next steps:
           </div>
 
           {/* Messages */}
-          <div style={{
-            flex: 1,
-            overflowY: "auto",
-            padding: "14px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px"
-          }}>
+
+          <div
+            style={{
+              flex: 1,
+
+              overflowY: "auto",
+
+              padding: "14px",
+
+              display: "flex",
+
+              flexDirection: "column",
+
+              gap: "12px",
+            }}
+          >
 
             {messages.length === 0 && (
-              <div style={{
-                color: "#8b949e",
-                fontSize: "12px",
-                lineHeight: "1.8"
-              }}>
+
+              <div
+                style={{
+                  color: "#b6b6b6",
+
+                  fontSize: "12px",
+
+                  lineHeight: "1.9",
+
+                  background:
+                    "linear-gradient(145deg,#0d0d0d,#151515)",
+
+                  border:
+                    "1px solid rgba(255,140,66,0.10)",
+
+                  borderRadius: "14px",
+
+                  padding: "14px",
+                }}
+              >
+
                 Ask RepoGuardian AI about:
 
                 <br /><br />
@@ -238,6 +321,7 @@ Recommended next steps:
                 • remediation priority
                 <br />
                 • compliance analysis
+
               </div>
             )}
 
@@ -247,31 +331,58 @@ Recommended next steps:
 
                 {m.type === "user" ? (
 
-                  <div style={{
-                    background: "#1f6feb",
-                    color: "white",
-                    padding: "10px 12px",
-                    borderRadius: "12px",
-                    maxWidth: "85%",
-                    marginLeft: "auto",
-                    fontSize: "12px",
-                    lineHeight: "1.6"
-                  }}>
+                  <div
+                    style={{
+                      background:
+                        "linear-gradient(135deg,#ff7a00,#ff9d2e)",
+
+                      color: "white",
+
+                      padding: "12px 14px",
+
+                      borderRadius: "14px",
+
+                      maxWidth: "85%",
+
+                      marginLeft: "auto",
+
+                      fontSize: "12px",
+
+                      lineHeight: "1.6",
+
+                      boxShadow:
+                        "0 0 16px rgba(255,140,66,0.22)",
+                    }}
+                  >
                     {m.text}
                   </div>
 
                 ) : (
 
-                  <div style={{
-                    background: "#161b22",
-                    border: "1px solid #21262d",
-                    color: "#c9d1d9",
-                    padding: "12px",
-                    borderRadius: "12px",
-                    fontSize: "12px",
-                    lineHeight: "1.7",
-                    whiteSpace: "pre-line"
-                  }}>
+                  <div
+                    style={{
+                      background:
+                        "linear-gradient(145deg,#0a0a0a,#151515)",
+
+                      border:
+                        "1px solid rgba(255,140,66,0.10)",
+
+                      color: "#e5e7eb",
+
+                      padding: "14px",
+
+                      borderRadius: "14px",
+
+                      fontSize: "12px",
+
+                      lineHeight: "1.8",
+
+                      whiteSpace: "pre-line",
+
+                      boxShadow:
+                        "0 0 16px rgba(0,0,0,0.25)",
+                    }}
+                  >
                     {m.text}
                   </div>
 
@@ -282,14 +393,24 @@ Recommended next steps:
             ))}
 
             {loading && (
-              <div style={{
-                background: "#161b22",
-                border: "1px solid #21262d",
-                color: "#8b949e",
-                padding: "10px 12px",
-                borderRadius: "10px",
-                fontSize: "12px"
-              }}>
+
+              <div
+                style={{
+                  background:
+                    "linear-gradient(145deg,#0a0a0a,#151515)",
+
+                  border:
+                    "1px solid rgba(255,140,66,0.10)",
+
+                  color: "#ffb066",
+
+                  padding: "12px",
+
+                  borderRadius: "12px",
+
+                  fontSize: "12px",
+                }}
+              >
                 RepoGuardian AI analyzing threat posture...
               </div>
             )}
@@ -297,12 +418,18 @@ Recommended next steps:
           </div>
 
           {/* Suggestions */}
-          <div style={{
-            padding: "0 12px 8px 12px",
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "6px"
-          }}>
+
+          <div
+            style={{
+              padding: "0 12px 8px 12px",
+
+              display: "flex",
+
+              flexWrap: "wrap",
+
+              gap: "6px",
+            }}
+          >
 
             {[
               "auth risk",
@@ -315,13 +442,23 @@ Recommended next steps:
                 key={idx}
                 onClick={() => setQuestion(item)}
                 style={{
-                  background: "#161b22",
-                  border: "1px solid #30363d",
-                  color: "#8b949e",
-                  padding: "5px 8px",
-                  borderRadius: "20px",
+                  background:
+                    "linear-gradient(145deg,#0d0d0d,#161616)",
+
+                  border:
+                    "1px solid rgba(255,140,66,0.12)",
+
+                  color: "#ffb066",
+
+                  padding: "6px 10px",
+
+                  borderRadius: "999px",
+
                   fontSize: "10px",
-                  cursor: "pointer"
+
+                  cursor: "pointer",
+
+                  transition: "0.2s ease",
                 }}
               >
                 {item}
@@ -332,28 +469,45 @@ Recommended next steps:
           </div>
 
           {/* Input */}
-          <div style={{
-            padding: "12px",
-            borderTop: "1px solid #21262d"
-          }}>
+
+          <div
+            style={{
+              padding: "12px",
+
+              borderTop:
+                "1px solid rgba(255,140,66,0.08)",
+            }}
+          >
 
             <input
               value={question}
-              onChange={(e) => setQuestion(e.target.value)}
+              onChange={(e) =>
+                setQuestion(e.target.value)
+              }
               placeholder="Ask about security risks..."
               onKeyDown={(e) => {
                 if (e.key === "Enter") askAI();
               }}
               style={{
                 width: "100%",
-                background: "#161b22",
-                border: "1px solid #30363d",
+
+                background:
+                  "linear-gradient(145deg,#0b0b0b,#141414)",
+
+                border:
+                  "1px solid rgba(255,140,66,0.12)",
+
                 color: "white",
-                padding: "10px",
-                borderRadius: "8px",
-                marginBottom: "10px",
+
+                padding: "12px",
+
+                borderRadius: "12px",
+
+                marginBottom: "12px",
+
                 outline: "none",
-                fontSize: "12px"
+
+                fontSize: "12px",
               }}
             />
 
@@ -362,14 +516,26 @@ Recommended next steps:
               disabled={loading}
               style={{
                 width: "100%",
-                background: "#238636",
+
+                background:
+                  "linear-gradient(135deg,#ff7a00,#ffb347)",
+
                 border: "none",
-                color: "white",
-                padding: "10px",
-                borderRadius: "8px",
+
+                color: "#111",
+
+                padding: "12px",
+
+                borderRadius: "12px",
+
                 cursor: "pointer",
-                fontWeight: 600,
-                fontSize: "12px"
+
+                fontWeight: 700,
+
+                fontSize: "12px",
+
+                boxShadow:
+                  "0 0 18px rgba(255,140,66,0.22)",
               }}
             >
               {loading
@@ -380,7 +546,6 @@ Recommended next steps:
           </div>
 
         </div>
-
       )}
 
     </>

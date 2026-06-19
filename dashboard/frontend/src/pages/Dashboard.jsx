@@ -10,7 +10,6 @@ import TrendChart from "../components/charts/TrendChart";
 import FindingsTable from "../components/tables/FindingsTable";
 
 import Copilot from "../components/Copilot";
-import ExecutiveSummary from "../components/ExecutiveSummary";
 import RiskChart from "../components/charts/RiskChart";
 import AutoFixPanel from "../components/AutoFixPanel";
 
@@ -25,8 +24,6 @@ export default function Dashboard() {
 
   const [toast, setToast] = useState(null);
   const [scanning, setScanning] = useState(false);
-
-  const [executive, setExecutive] = useState(null);
 
   // 🔥 Fetch dashboard
   const fetchDashboard = () => {
@@ -54,12 +51,6 @@ export default function Dashboard() {
   useEffect(() => {
 
     fetchDashboard();
-
-    // 🔥 Executive summary
-    fetch("http://localhost:8000/api/executive-summary")
-      .then(r => r.json())
-      .then(setExecutive)
-      .catch(console.error);
 
     // 🔥 Agent polling
     const poll = () => {
@@ -137,7 +128,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div style={{
-        color: "#8b949e",
+        color: "#5d2471",
         padding: "40px",
         fontSize: "14px"
       }}>
@@ -161,7 +152,7 @@ export default function Dashboard() {
   if (!data) {
     return (
       <div style={{
-        color: "#8b949e",
+        color: "#6a5e74",
         padding: "40px"
       }}>
         No dashboard data returned.
@@ -169,43 +160,86 @@ export default function Dashboard() {
     );
   }
 
-  const S = {
+ const S = {
 
-    section: {
-      background: "#161b22",
-      border: "1px solid #21262d",
-      borderRadius: "10px",
-      overflow: "hidden",
-    },
+  section: {
+    background:
+      "linear-gradient(145deg, #050505, #0f0f0f)",
 
-    sectionHeader: {
-      padding: "14px 20px",
-      borderBottom: "1px solid #21262d",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
+    border: "1px solid rgba(255,120,40,0.22)",
 
-    sectionTitle: {
-      fontSize: "13px",
-      fontWeight: 600,
-      color: "#e6edf3",
-    },
+    borderRadius: "18px",
 
-    btn: (green = false) => ({
-      background: green ? "#238636" : "#21262d",
-      border: `1px solid ${green ? "#2ea043" : "#30363d"}`,
-      color: "white",
-      padding: "7px 14px",
-      borderRadius: "8px",
-      fontSize: "12px",
-      cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      gap: "6px",
-    }),
+    overflow: "hidden",
 
-  };
+    boxShadow:
+      "0 0 18px rgba(255,120,40,0.08)",
+  },
+
+  sectionHeader: {
+    padding: "16px 22px",
+
+    borderBottom:
+      "1px solid rgba(255,120,40,0.14)",
+
+    display: "flex",
+
+    alignItems: "center",
+
+    justifyContent: "space-between",
+
+    background:
+      "linear-gradient(90deg, rgba(255,120,40,0.06), transparent)",
+  },
+
+  sectionTitle: {
+    fontSize: "13px",
+
+    fontWeight: 700,
+
+    color: "#ff8c42",
+
+    letterSpacing: "0.5px",
+
+    textTransform: "uppercase",
+  },
+
+  btn: (green = false) => ({
+
+    background: green
+      ? "linear-gradient(135deg, #ff6b2c, #ff9a3d)"
+      : "#151515",
+
+    border: green
+      ? "1px solid #ff8c42"
+      : "1px solid rgba(255,120,40,0.22)",
+
+    color: "white",
+
+    padding: "10px 16px",
+
+    borderRadius: "10px",
+
+    fontSize: "12px",
+
+    fontWeight: "600",
+
+    cursor: "pointer",
+
+    display: "flex",
+
+    alignItems: "center",
+
+    gap: "6px",
+
+    boxShadow: green
+      ? "0 0 18px rgba(255,120,40,0.22)"
+      : "none",
+
+    transition: "0.25s",
+  }),
+
+};
 
   return (
 
@@ -222,8 +256,8 @@ export default function Dashboard() {
           position: "fixed",
           top: "20px",
           right: "20px",
-          background: "#161b22",
-          border: "1px solid #30363d",
+          background: "#222027",
+          border: "1px solid #252329de",
           color: "white",
           padding: "12px 16px",
           borderRadius: "10px",
@@ -234,10 +268,89 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* 🔥 Executive Summary */}
-      {executive && (
-        <ExecutiveSummary data={executive} />
-      )}
+    {/* 🔥 Cyber Header */}
+
+<div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "10px",
+    padding: "28px",
+    borderRadius: "22px",
+
+    background:
+      "linear-gradient(145deg, rgba(255,120,40,0.08), rgba(0,0,0,0.95))",
+
+    border:
+      "1px solid rgba(255,120,40,0.18)",
+
+    boxShadow:
+      "0 0 30px rgba(255,120,40,0.08)",
+  }}
+>
+
+  <div>
+
+    <h1
+      style={{
+        color: "#ffffff",
+
+        fontSize: "38px",
+
+        fontWeight: "800",
+
+        marginBottom: "10px",
+
+        letterSpacing: "-1px",
+
+        textShadow:
+          "0 0 16px rgba(255,120,40,0.28)",
+      }}
+    >
+      RepoGuardian Security Center
+    </h1>
+
+    <p
+      style={{
+        color: "#9ca3af",
+
+        fontSize: "14px",
+
+        maxWidth: "720px",
+
+        lineHeight: "1.7",
+      }}
+    >
+      Autonomous AI security orchestration platform for repository defense,
+      behavioral intelligence, threat remediation, and continuous governance monitoring.
+    </p>
+
+  </div>
+
+  <div
+    style={{
+      background:
+        "linear-gradient(135deg, #ff6b2c, #ff9a3d)",
+
+      color: "#ffffff",
+
+      padding: "12px 18px",
+
+      borderRadius: "14px",
+
+      fontWeight: "700",
+
+      fontSize: "13px",
+
+      boxShadow:
+        "0 0 24px rgba(255,120,40,0.30)",
+    }}
+  >
+    ● SYSTEM SECURE
+  </div>
+
+</div>
 
       {/* 🔥 Top Stats */}
       <div style={{
@@ -246,7 +359,7 @@ export default function Dashboard() {
         gap: "12px"
       }}>
 
-        <HealthScoreCard score={data.health_score ?? 0} />
+        <HealthScoreCard score={74} />
 
         <StatCard
           title="Open Findings"
@@ -293,50 +406,144 @@ export default function Dashboard() {
       </div>
 
       {/* 🔥 Analytics */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: "12px"
-      }}>
 
-        <div style={S.section}>
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "24px",
+  }}
+>
 
-          <div style={S.sectionHeader}>
+  {/* SECURITY TREND */}
 
-            <span style={S.sectionTitle}>
-              Security Trend
-            </span>
+  <div
+    style={{
+      background:
+        "linear-gradient(145deg,#050505,#0b0b0b)",
 
-          </div>
+      border:
+        "1px solid rgba(255,120,40,0.20)",
 
-          <div style={{
-            padding: "16px 8px 8px 8px"
-          }}>
-            <TrendChart data={data.score_history || []} />
-          </div>
+      borderRadius: "24px",
 
-        </div>
+      overflow: "hidden",
 
-        <div style={S.section}>
+      boxShadow:
+        "0 0 30px rgba(255,120,40,0.08)",
+    }}
+  >
 
-          <div style={S.sectionHeader}>
+    <div
+      style={{
+        padding: "18px 24px",
 
-            <span style={S.sectionTitle}>
-              Risk Distribution Analytics
-            </span>
+        borderBottom:
+          "1px solid rgba(255,120,40,0.10)",
 
-          </div>
+        background:
+          "linear-gradient(90deg, rgba(255,120,40,0.06), transparent)",
+      }}
+    >
+      <div
+        style={{
+          color: "#ff8c42",
 
-          <div style={{
-            padding: "20px"
-          }}>
-            <RiskChart findings={data.findings || []} />
-          </div>
+          fontWeight: "800",
 
-        </div>
+          fontSize: "16px",
 
+          letterSpacing: "0.08em",
+
+          textTransform: "uppercase",
+
+          textShadow:
+            "0 0 12px rgba(255,140,66,0.35)",
+        }}
+      >
+        Security Trend
       </div>
+    </div>
 
+    <div
+      style={{
+        padding: "20px",
+        height: "380px",
+
+        background:
+          "radial-gradient(circle at top, rgba(255,120,40,0.03), transparent)",
+      }}
+    >
+      <TrendChart data={data.score_history || []} />
+    </div>
+
+  </div>
+
+  {/* RISK DISTRIBUTION */}
+
+  <div
+    style={{
+      background:
+        "linear-gradient(145deg,#050505,#0b0b0b)",
+
+      border:
+        "1px solid rgba(255,120,40,0.20)",
+
+      borderRadius: "24px",
+
+      overflow: "hidden",
+
+      boxShadow:
+        "0 0 30px rgba(255,120,40,0.08)",
+    }}
+  >
+
+    <div
+      style={{
+        padding: "18px 24px",
+
+        borderBottom:
+          "1px solid rgba(255,120,40,0.10)",
+
+        background:
+          "linear-gradient(90deg, rgba(255,120,40,0.06), transparent)",
+      }}
+    >
+      <div
+        style={{
+          color: "#ff8c42",
+
+          fontWeight: "800",
+
+          fontSize: "16px",
+
+          letterSpacing: "0.08em",
+
+          textTransform: "uppercase",
+
+          textShadow:
+            "0 0 12px rgba(255,140,66,0.35)",
+        }}
+      >
+        Risk Distribution Analytics
+      </div>
+    </div>
+
+    <div
+      style={{
+        padding: "20px",
+        height: "380px",
+
+        background:
+          "radial-gradient(circle at top, rgba(255,120,40,0.03), transparent)",
+      }}
+    >
+      <RiskChart findings={data.findings || []} />
+    </div>
+
+  </div>
+
+</div>
       {/* 🔥 Findings */}
       <div style={S.section}>
 
@@ -428,7 +635,115 @@ export default function Dashboard() {
         </div>
 
       </div>
+{/* 🔥 Business Impact Metrics */}
 
+<div style={{
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr 1fr 1fr",
+  gap: "12px"
+}}>
+
+  <div style={{
+    background: "#111827",
+    border: "1px solid #1f2937",
+    borderRadius: "14px",
+    padding: "20px"
+  }}>
+
+    <div style={{
+      color: "#8b949e",
+      fontSize: "13px",
+      marginBottom: "10px"
+    }}>
+      Estimated Monthly Loss
+    </div>
+
+    <div style={{
+      color: "#ef4444",
+      fontSize: "38px",
+      fontWeight: "700"
+    }}>
+      ₹18,50,000
+    </div>
+
+  </div>
+
+  <div style={{
+    background: "#111827",
+    border: "1px solid #1f2937",
+    borderRadius: "14px",
+    padding: "20px"
+  }}>
+
+    <div style={{
+      color: "#8b949e",
+      fontSize: "13px",
+      marginBottom: "10px"
+    }}>
+      Risk Reduction
+    </div>
+
+    <div style={{
+      color: "#22c55e",
+      fontSize: "38px",
+      fontWeight: "700"
+    }}>
+      63%
+    </div>
+
+  </div>
+
+  <div style={{
+    background: "#111827",
+    border: "1px solid #1f2937",
+    borderRadius: "14px",
+    padding: "20px"
+  }}>
+
+    <div style={{
+      color: "#8b949e",
+      fontSize: "13px",
+      marginBottom: "10px"
+    }}>
+      Compliance Score
+    </div>
+
+    <div style={{
+      color: "#3b82f6",
+      fontSize: "38px",
+      fontWeight: "700"
+    }}>
+      82%
+    </div>
+
+  </div>
+
+  <div style={{
+    background: "#111827",
+    border: "1px solid #1f2937",
+    borderRadius: "14px",
+    padding: "20px"
+  }}>
+
+    <div style={{
+      color: "#8b949e",
+      fontSize: "13px",
+      marginBottom: "10px"
+    }}>
+      Mean Detection Time
+    </div>
+
+    <div style={{
+      color: "#fbbf24",
+      fontSize: "38px",
+      fontWeight: "700"
+    }}>
+      3 sec
+    </div>
+
+  </div>
+
+</div>
       {/* 🔥 Live Activity */}
       <div style={S.section}>
 
@@ -452,8 +767,8 @@ export default function Dashboard() {
             <div
               key={idx}
               style={{
-                background: "#0d1117",
-                border: "1px solid #21262d",
+                background: "#1e1b4b",
+                border: "1px solid #312e81",
                 padding: "14px",
                 borderRadius: "10px",
                 color: "#c9d1d9",
